@@ -46,6 +46,7 @@ SOURCES += main.cpp\
     QSegPictureDisplay.cpp \
     QRelationDisplay.cpp \
     QSearchListDisplay.cpp \
+    QTagDisplay.cpp \
     ImageSeg/SegObject.cpp \
     ImageSeg/MeanShift.cpp \
     ImageSeg/CvvImage.cpp
@@ -77,6 +78,7 @@ HEADERS  += mainwindow.h \
     QSegPictureDisplay.h \
     QRelationDisplay.h \
     QSearchListDisplay.h \
+    QTagDisplay.h \
     ImageSeg/SegObject.h \
     ImageSeg/MeanShift.h \
     ImageSeg/CvvImage.h

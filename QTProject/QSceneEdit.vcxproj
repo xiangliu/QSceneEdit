@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{6AC2F480-AE18-3E6D-A0DC-8B5B6A920975}</ProjectGuid>
+    <ProjectGuid>{1C9907B1-D313-3049-99C5-8D208AB8A610}</ProjectGuid>
     <RootNamespace>QSceneEdit</RootNamespace>
     <Keyword>Qt4VSv1.0</Keyword>
   </PropertyGroup>
@@ -148,6 +148,7 @@
     <ClCompile Include="QSceneDisplay.cpp" />
     <ClCompile Include="QSearchListDisplay.cpp" />
     <ClCompile Include="QSegPictureDisplay.cpp" />
+    <ClCompile Include="QTagDisplay.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="ImageSeg\SegObject.cpp" />
     <ClCompile Include="trimesh\TriMesh_bounding.cc" />
@@ -236,6 +237,16 @@
       <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">MOC QSegPictureDisplay.h</Message>
       <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">release\moc_QSegPictureDisplay.cpp;%(Outputs)</Outputs>
     </CustomBuild>
+    <CustomBuild Include="QTagDisplay.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe;QTagDisplay.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe  -DUNICODE -DWIN32 -DQT_LARGEFILE_SUPPORT -DQT_DLL -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_HAVE_MMX -DQT_HAVE_3DNOW -DQT_HAVE_SSE -DQT_HAVE_MMXEXT -DQT_HAVE_SSE2 -DQT_THREAD_SUPPORT -I&quot;c:\Qt\4.8.2\include\QtCore&quot; -I&quot;c:\Qt\4.8.2\include\QtGui&quot; -I&quot;c:\Qt\4.8.2\include\QtOpenGL&quot; -I&quot;c:\Qt\4.8.2\include&quot; -I&quot;c:\OpenCV2.2\include\opencv&quot; -I&quot;c:\OpenCV2.2\include&quot; -I&quot;c:\Qt\4.8.2\include\ActiveQt&quot; -I&quot;debug&quot; -I&quot;.&quot; -Ic:\Qt\4.8.2\mkspecs\default -D_MSC_VER=1600 -DWIN32 QTagDisplay.h -o debug\moc_QTagDisplay.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">MOC QTagDisplay.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">debug\moc_QTagDisplay.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe;QTagDisplay.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe  -DUNICODE -DWIN32 -DQT_LARGEFILE_SUPPORT -DQT_DLL -DQT_NO_DEBUG -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_HAVE_MMX -DQT_HAVE_3DNOW -DQT_HAVE_SSE -DQT_HAVE_MMXEXT -DQT_HAVE_SSE2 -DQT_THREAD_SUPPORT -I&quot;c:\Qt\4.8.2\include\QtCore&quot; -I&quot;c:\Qt\4.8.2\include\QtGui&quot; -I&quot;c:\Qt\4.8.2\include\QtOpenGL&quot; -I&quot;c:\Qt\4.8.2\include&quot; -I&quot;c:\OpenCV2.2\include\opencv&quot; -I&quot;c:\OpenCV2.2\include&quot; -I&quot;c:\Qt\4.8.2\include\ActiveQt&quot; -I&quot;release&quot; -I&quot;.&quot; -Ic:\Qt\4.8.2\mkspecs\default -D_MSC_VER=1600 -DWIN32 QTagDisplay.h -o release\moc_QTagDisplay.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">MOC QTagDisplay.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">release\moc_QTagDisplay.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
     <CustomBuild Include="Scene.h">
       <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe;Scene.h;%(AdditionalInputs)</AdditionalInputs>
       <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe  -DUNICODE -DWIN32 -DQT_LARGEFILE_SUPPORT -DQT_DLL -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_HAVE_MMX -DQT_HAVE_3DNOW -DQT_HAVE_SSE -DQT_HAVE_MMXEXT -DQT_HAVE_SSE2 -DQT_THREAD_SUPPORT -I&quot;c:\Qt\4.8.2\include\QtCore&quot; -I&quot;c:\Qt\4.8.2\include\QtGui&quot; -I&quot;c:\Qt\4.8.2\include\QtOpenGL&quot; -I&quot;c:\Qt\4.8.2\include&quot; -I&quot;c:\OpenCV2.2\include\opencv&quot; -I&quot;c:\OpenCV2.2\include&quot; -I&quot;c:\Qt\4.8.2\include\ActiveQt&quot; -I&quot;debug&quot; -I&quot;.&quot; -Ic:\Qt\4.8.2\mkspecs\default -D_MSC_VER=1600 -DWIN32 Scene.h -o debug\moc_Scene.cpp</Command>
@@ -297,6 +308,12 @@
       <ExcludedFromBuild Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="release\moc_QSegPictureDisplay.cpp">
+      <ExcludedFromBuild Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="debug\moc_QTagDisplay.cpp">
+      <ExcludedFromBuild Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="release\moc_QTagDisplay.cpp">
       <ExcludedFromBuild Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="debug\moc_Scene.cpp">

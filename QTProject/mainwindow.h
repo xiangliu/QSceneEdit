@@ -16,11 +16,14 @@
 #include <QToolBar>
 #include <QImage>
 #include <QLabel>
+#include <QSplitter>
 
 #include "QSceneDisplay.h"
 #include "Scene.h"
 #include "QPictureDisplay.h"
 #include "QSegPictureDisplay.h"
+#include "QRelationDisplay.h"
+#include "QTagDisplay.h"
 
 namespace Ui {
 class MainWindow;
@@ -40,16 +43,22 @@ public:
     QSceneDisplay *sceneDisplayWidget;
 	QPictureDisplay *pictureDisplayWidget;
 	QSegPictureDisplay *segPictureDisplayWidget;
+	QRelationDisplay *relationDisplayWidget;
+	QTagDisplay *tagDisplayWidget;
 
+	//用来对整个屏幕区域进行布局的
+	QGridLayout *mainLayout;
+	QSplitter *mainSplitter;
+	QSplitter *rightSplitter;
+
+
+	//QHBoxLayout *mainLayout;
 	QGridLayout *gridLayout;
 	QGridLayout *rightLayout; //最右侧放置tag标签等东西的layout
 	//QDockWidget *rdocWidget;  // right Dock Widget
 	//QTreeWidget* relationTreeWidget;
 
-	QLineEdit *tagEdit ; // 用于输入照片分割后的object tag
-	QLabel *tagLabel ;   // 用于输入照片分割后的object tag
-
-	// 右边的停留空间
+	// 右边的停留空间;****暂时没有使用******
 	QDockWidget *rdocWidget;  // right Dock Widget
 	QTreeWidget* treeWidget;
 	QList<QTreeWidgetItem *> rootList;

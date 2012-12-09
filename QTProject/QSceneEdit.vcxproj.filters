@@ -86,6 +86,9 @@
     <ClCompile Include="QSegPictureDisplay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="QTagDisplay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -211,6 +214,9 @@
     <CustomBuild Include="QSegPictureDisplay.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <CustomBuild Include="QTagDisplay.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
     <CustomBuild Include="Scene.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
@@ -280,6 +286,12 @@
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="release\moc_QSegPictureDisplay.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="debug\moc_QTagDisplay.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="release\moc_QTagDisplay.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="debug\moc_Scene.cpp">

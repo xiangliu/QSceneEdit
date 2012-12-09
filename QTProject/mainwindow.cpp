@@ -278,15 +278,52 @@ void MainWindow::CreateCentralWidget()
 	//照片显示部分变量初始化
 	pictureDisplayWidget = new QPictureDisplay;
 	segPictureDisplayWidget = new QSegPictureDisplay;
-
+	relationDisplayWidget = new QRelationDisplay;
+	tagDisplayWidget = new QTagDisplay;
+	/*
 	// 界面内容层次结构
 	gridLayout=new QGridLayout;
 	gridLayout->addWidget(pictureDisplayWidget,0,0);
 	gridLayout->addWidget(segPictureDisplayWidget,0,1);
 	//hlayout->addWidget(sceneDisplayWidget);
+	*/
 	
+	/*tagLayout = new QHBoxLayout;
+	tagLabel = new QLabel(tr("Tag of Object:"));
+	tagEdit = new QLineEdit;
+	tagEdit->setMaxLength(10);
+	weightSpinBox = new QSpinBox;
+	weightSpinBox->setMaximum(10);
+	weightSpinBox->setMinimum(1);
+	weightLabel = new QLabel(tr("Object weight:"));
+	saveButton = new QPushButton(tr("Save"));
+	tagLayout->addWidget(tagLabel);
+	tagLayout->addWidget(tagEdit);
+	tagLayout->addWidget(weightLabel);
+	tagLayout->addWidget(weightSpinBox);
+	tagLayout->addWidget(saveButton);
+	tagWidget = new QWidget;
+	tagWidget->setLayout(tagLayout);*/
+
+	rightSplitter = new QSplitter(Qt::Vertical);
+	rightSplitter->addWidget(tagDisplayWidget);
+	rightSplitter->addWidget(segPictureDisplayWidget);
+	rightSplitter->addWidget(relationDisplayWidget);
+	rightSplitter->setStretchFactor(0,2);
+
+	mainSplitter = new QSplitter(Qt::Horizontal);
+	mainSplitter->addWidget(pictureDisplayWidget);
+	mainSplitter->addWidget(rightSplitter);
+	mainSplitter->setStretchFactor(0,2);
+	mainSplitter->setStyleSheet("QSplitter::handle { background-color: gray }"); 
+	mainSplitter->setHandleWidth(3);  
+	mainLayout = new QGridLayout;
+	mainLayout->addWidget(mainSplitter,0,0);
+
+	ui->centralWidget->setLayout(mainLayout);
+
 	// 界面主层次结构
-	ui->centralWidget->setLayout(gridLayout);
+	//ui->centralWidget->setLayout(gridLayout);
 
 }
 
