@@ -33,6 +33,7 @@ public:
 	void GenObj();      //生成原始图片中被选中的某个物体
 	void ResetSelectedImage();   //在选中某个物体并保存之后，进行下一次pickup之前需要清理前一次的object
 	void paintEvent(QPaintEvent *e);  //继承自基类的虚绘制函数
+	void GetSurroudRect(QPoint &A, QPoint &B); //获取二维的包围盒
 
 protected:
 	void mouseMoveEvent(QMouseEvent *event);
@@ -81,6 +82,8 @@ public slots:
 	void PickImageAction();         //used to pickup the segmented object
 	void OpenImageFile(QImage *SourceImage);  //响应在mainwindow中载入照片的action
 	void GetMainwMesg(QSegPictureDisplay *segPicDispWidget); //从mainwindow获得QSegPictureDisplay的指针
+	void SaveSegObject(QString tag, int weight); //用于保存分割好的object
+
 private:
     //Ui::QPictureDisplay *ui;
 };

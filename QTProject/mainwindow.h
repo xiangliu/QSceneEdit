@@ -44,13 +44,21 @@ public:
 	QPictureDisplay *pictureDisplayWidget;
 	QSegPictureDisplay *segPictureDisplayWidget;
 	QRelationDisplay *relationDisplayWidget;
-	QTagDisplay *tagDisplayWidget;
+	//QTagDisplay *tagDisplayWidget;
 
 	//用来对整个屏幕区域进行布局的
 	QGridLayout *mainLayout;
 	QSplitter *mainSplitter;
 	QSplitter *rightSplitter;
 
+	//用于mainwindow右边布局使用的控件
+	QLineEdit *tagEdit ; // 用于输入照片分割后的object tag
+	QLabel *tagLabel ;   // 用于输入照片分割后的object tag
+	QSpinBox *weightSpinBox; //用于输入物体的权重
+	QLabel *weightLabel ;    // 用于输入物体的权重 tag
+	QHBoxLayout *tagLayout ;
+	QPushButton *saveButton;
+	QWidget *tagWidget;
 
 	//QHBoxLayout *mainLayout;
 	QGridLayout *gridLayout;
@@ -110,11 +118,13 @@ signals:
 	void OpenImageFile(QImage *SourceImage); //Open image file
 	void PickImageObject(int state); //pick object from the segmented image
 	void SendPicDisMesg(QSegPictureDisplay *segPictureDisplayWidget); //send QPictureDisplay the poniter of QSegPictureDisplay
+	void SaveSegObject(QString tag, int weight); //用于提醒QPictureDisplay.h去保存被分割好的物体
 
 public slots:
     void OpenSceneFile();
     void SaveSceneFile();
     void MOpenImageFile();  //********added by liu xiang; for open picture*********
+	void ClickImageSaveButton();
 
 private:
     Ui::MainWindow *ui;

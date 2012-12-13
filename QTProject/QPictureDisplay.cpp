@@ -364,3 +364,70 @@ void QPictureDisplay::mousePressEvent(QMouseEvent *event)
 void QPictureDisplay::wheelEvent(QWheelEvent *event)
 {
 }
+
+void QPictureDisplay::GetSurroudRect(QPoint &A, QPoint &B)
+{
+	A.setX(grayimg.Width()+1);
+	A.setY(grayimg.Height()+1);
+	B.setX(-1);
+	B.setY(-1);
+
+	IplImage *Iplgrayimg=grayimg.GetImage();
+	int h = grayimg.Height();
+	int w = grayimg.Width();
+
+	for (int i=0;i< h ;i++)
+		for (int j=0;j< w;j++)
+		{
+			if ((Iplgrayimg->imageData+i*Iplgrayimg->widthStep)[j*Iplgrayimg->nChannels]==0)
+			{
+				// max x,y
+				B.setX(j > B.x()? j: B.x() );
+				B.setY(i > B.y()? i: B.y() );
+				// min x,y
+				A.setX(j < A.x()? j: A.x() );
+				A.setY(i < A.y()? i: A.y() );
+			}
+		}	
+}
+
+//slot
+//用于处理从mainwindow传过来的signal，保存被分割好的物体
+void QPictureDisplay::SaveSegObject(QString tag, int weight)
+{
+	if(hState != objcetPicked)
+	{
+		//QMessgbox
+		return;
+	}
+	QPoint A, B;
+	this->GetSurroudRect(A,B);
+
+	CSegObject *object=new CSegObject;
+	object->SetGrayImg(grayimg);
+	object->SetObjImg(obj);
+	//object->filename= filename;
+
+	object->upLeft = A;
+	object->downRight = B;
+
+	//********将分割结果保存成文件
+	/*
+	string str;
+	strstream stream;
+	stream<<"SearchSource\\"<<object->filename<<"_"<<this->ObjectPos<<"_black"<<".bmp";
+	stream>>str;
+	stream.clear();
+	grayimg.Save(str.c_str()); // 存黑白
+
+	stream<<"SearchSource\\"<<object->filename<<"_"<<this->ObjectPos<<"_rgb"<<".bmp";
+	stream>>str;
+	stream.clear();
+	obj.Save(str.c_str()); // 存rgb
+	*/
+	//********************************
+
+	object->tag= tag.toStdString() ;
+	objects.push_back(object);
+	//this->ObjectPos++;
+}

@@ -17,7 +17,8 @@ public:
 	CvvImage objimg; // 彩色图，用来进行纹理处理
 	void SetGrayImg(CvvImage& img);
 	void SetObjImg(CvvImage& img);
-	char* tag;
+	//char* tag;
+	std::string tag;
 	std::string filename;
 	double x;
 	double y;

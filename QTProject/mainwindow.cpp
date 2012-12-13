@@ -44,6 +44,8 @@ void MainWindow::CreateConnections()
 	connect(this,SIGNAL(OpenImageFile(QImage *)),pictureDisplayWidget,SLOT(OpenImageFile(QImage *)));
 	connect(this,SIGNAL(SendPicDisMesg(QSegPictureDisplay *)),pictureDisplayWidget,SLOT(GetMainwMesg(QSegPictureDisplay *)));
 	connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));
+	connect(this,SIGNAL(SaveSegObject(QString ,int)),pictureDisplayWidget,SLOT(SaveSegObject(QString ,int)));
+
 	emit SendPicDisMesg(segPictureDisplayWidget);
 	//connect(this,SIGNAL(PickImageObject(int)),pictureDisplayWidget,SLOT(PickImageAction(int)));
 	//connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
@@ -84,6 +86,26 @@ void MainWindow::MOpenImageFile()
 	}
 	emit OpenImageFile(SourceImage);
     //emit SetDisScene(scene);
+}
+
+//当输入晚image tag，且对于image进行修改完毕，则click进行保存
+void  MainWindow::ClickImageSaveButton()
+{
+	QString imageTag;
+	//first,check the tag input
+	imageTag = tagEdit->text();
+	if(imageTag.isEmpty())
+	{
+           //QMessageBox("Please input the object tag !");
+		   return;
+	}
+	QString w = weightSpinBox->text();
+	QChar *t = w.data();
+	char temp1 = t[0].toAscii();
+	int wg = temp1 - '0';
+	//转移给QPictureDisplay.h去处理
+	emit SaveSegObject(imageTag ,wg);
+
 }
 
 void MainWindow::SaveSceneFile()
@@ -279,7 +301,7 @@ void MainWindow::CreateCentralWidget()
 	pictureDisplayWidget = new QPictureDisplay;
 	segPictureDisplayWidget = new QSegPictureDisplay;
 	relationDisplayWidget = new QRelationDisplay;
-	tagDisplayWidget = new QTagDisplay;
+	//tagDisplayWidget = new QTagDisplay;
 	/*
 	// 界面内容层次结构
 	gridLayout=new QGridLayout;
@@ -288,25 +310,28 @@ void MainWindow::CreateCentralWidget()
 	//hlayout->addWidget(sceneDisplayWidget);
 	*/
 	
-	/*tagLayout = new QHBoxLayout;
+	tagLayout = new QHBoxLayout;
 	tagLabel = new QLabel(tr("Tag of Object:"));
 	tagEdit = new QLineEdit;
 	tagEdit->setMaxLength(10);
 	weightSpinBox = new QSpinBox;
 	weightSpinBox->setMaximum(10);
 	weightSpinBox->setMinimum(1);
+	weightSpinBox->setValue(5);
 	weightLabel = new QLabel(tr("Object weight:"));
 	saveButton = new QPushButton(tr("Save"));
+	connect(saveButton,SIGNAL(clicked()),this,SLOT(ClickImageSaveButton()));
+
 	tagLayout->addWidget(tagLabel);
 	tagLayout->addWidget(tagEdit);
 	tagLayout->addWidget(weightLabel);
 	tagLayout->addWidget(weightSpinBox);
 	tagLayout->addWidget(saveButton);
 	tagWidget = new QWidget;
-	tagWidget->setLayout(tagLayout);*/
+	tagWidget->setLayout(tagLayout);
 
 	rightSplitter = new QSplitter(Qt::Vertical);
-	rightSplitter->addWidget(tagDisplayWidget);
+	rightSplitter->addWidget(tagWidget);
 	rightSplitter->addWidget(segPictureDisplayWidget);
 	rightSplitter->addWidget(relationDisplayWidget);
 	rightSplitter->setStretchFactor(0,2);

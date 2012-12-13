@@ -38,7 +38,7 @@ public slots:
 	void ClickedSaveButton();
 
 signals:
-	void 
+	//void 
 	// 事件处理
 protected:
 	
