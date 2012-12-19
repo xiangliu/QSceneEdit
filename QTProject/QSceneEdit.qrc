@@ -11,5 +11,8 @@
         <file>image/pickup.png</file>
         <file>image/brush.png</file>
         <file>image/eraser.png</file>
+        <file>image/relationship.png</file>
+        <file>image/display.png</file>
+        <file>image/search.png</file>
     </qresource>
 </RCC>

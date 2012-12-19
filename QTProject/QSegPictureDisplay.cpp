@@ -17,13 +17,18 @@ QSegPictureDisplay::~QSegPictureDisplay()
 
 void QSegPictureDisplay::paintEvent(QPaintEvent *e)
 {
-	if(grayImg != NULL)
+	if(grayImg != NULL && sState != cleanObject)
 	{
 	   //没有处理 x<0 和 y<0的情况
 		int x = width()/2 - grayImg->width()/2;
         int y = height()/2 - grayImg->height()/2;
 		QPainter painter(this);
 		painter.drawImage(QPoint(x,y),*grayImg);
+	}
+	else if( grayImg != NULL && sState == cleanObject )
+	{
+		QPainter painter(this);
+		painter.eraseRect(ImageRect);
 	}
 }
 
@@ -32,11 +37,11 @@ void QSegPictureDisplay::PickupObject(QImage *grayImage)
 	if(grayImage!=NULL)
 	{
 		sState = handleStart ;
+
 		grayImg = grayImage;
 		int x = width()/2 - grayImg->width()/2;
 		int y = height()/2 - grayImg->height()/2;
 		ImageRect.setCoords(x,y,x+grayImg->width(),y+grayImg->height());
-
 		this->update();
 	}
 }
@@ -86,6 +91,7 @@ void QSegPictureDisplay::paintImage(QPoint point, int size)
 			(imageData+i*grayImg->bytesPerLine())[temp1*j+0]=0;
 		}
 }
+
 void QSegPictureDisplay::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint point=event->pos();
@@ -116,4 +122,11 @@ void QSegPictureDisplay::mousePressEvent(QMouseEvent *event)
 void QSegPictureDisplay::wheelEvent(QWheelEvent *event)
 {
 
+}
+
+//主要做的事情就是清除QRect里原来的Object
+void QSegPictureDisplay::ClearDrawRect()
+{
+	sState = cleanObject;
+	this->update();
 }

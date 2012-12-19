@@ -65,6 +65,9 @@
     <ClCompile Include="Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MathLib.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ImageSeg\MeanShift.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -74,9 +77,6 @@
     <ClCompile Include="QPictureDisplay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="QRelationDisplay.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="QSceneDisplay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -84,6 +84,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="QSegPictureDisplay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="QSetRelationDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="QTagDisplay.cpp">
@@ -193,6 +196,9 @@
     <ClInclude Include="Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MathLib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="ImageSeg\MeanShift.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -202,9 +208,6 @@
     <CustomBuild Include="QPictureDisplay.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="QRelationDisplay.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="QSceneDisplay.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
@@ -212,6 +215,9 @@
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="QSegPictureDisplay.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="QSetRelationDialog.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="QTagDisplay.h">
@@ -264,12 +270,6 @@
     <ClCompile Include="release\moc_QPictureDisplay.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="debug\moc_QRelationDisplay.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="release\moc_QRelationDisplay.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="debug\moc_QSceneDisplay.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
@@ -286,6 +286,12 @@
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="release\moc_QSegPictureDisplay.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="debug\moc_QSetRelationDialog.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="release\moc_QSetRelationDialog.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="debug\moc_QTagDisplay.cpp">
@@ -331,6 +337,9 @@
     <None Include="image\choose.png">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="image\display.png">
+      <Filter>Resource Files</Filter>
+    </None>
     <None Include="image\eraser.png">
       <Filter>Resource Files</Filter>
     </None>
@@ -346,10 +355,16 @@
     <None Include="image\pickup.png">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="image\relationship.png">
+      <Filter>Resource Files</Filter>
+    </None>
     <None Include="image\rotate.png">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="image\save.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="image\search.png">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="image\segment.png">

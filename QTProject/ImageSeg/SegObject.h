@@ -1,9 +1,14 @@
-#pragma once
-
 #ifndef SEGOBJECT_CALSS_DEF
 #define SEGOBJECT_CALSS_DEF
 
+/************************************************************************/
+/*2012/12/17
+将tag从string改成 QString，为了方便处理，by liuxiang
+*/
+/************************************************************************/
+
 #include <QPoint>
+#include <QString>
 #include "CvvImage.h"
 #include <string>
 
@@ -18,7 +23,8 @@ public:
 	void SetGrayImg(CvvImage& img);
 	void SetObjImg(CvvImage& img);
 	//char* tag;
-	std::string tag;
+	//std::string tag;
+	QString tag;
 	std::string filename;
 	double x;
 	double y;

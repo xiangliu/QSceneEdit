@@ -11,11 +11,9 @@ QPictureDisplay::QPictureDisplay(QWidget *parent) :
 	SrcImage = NULL;
 	sImage = NULL;
 
-	colors = NULL; 
-	Iselected = NULL;
-
-	ClearPickupObject = false;
-
+	//Iselected = NULL;
+	Iselected=new int[256];     
+	memset(Iselected,0,256*4);
 }
 
 QPictureDisplay::~QPictureDisplay()
@@ -36,16 +34,8 @@ QPictureDisplay::~QPictureDisplay()
 	//	delete SrcImage;
 	//}
 
-	if(Iselected !=NULL)
-	{
-	   delete []Iselected;
-	}
-
-	if(colors !=NULL)
-	{
-		delete[] colors;
-	}
-
+	 delete []Iselected;
+	
 	//segmented image
 	if(hState == segmented)
 	{
@@ -82,6 +72,7 @@ void QPictureDisplay::SegImageAction()
 		{
 			labels[i]=new int[sImage->width];
 		}
+		//只是给原始图片进行每个像素标注，那个像素属于哪块
 		regionCount=MeanShift(sImage,labels);
 		GenImage();
 		hState = segmented;
@@ -97,18 +88,30 @@ void QPictureDisplay::PickImageAction()
 	//因为只有当前一阶段几经分割了图片才能进入到下一阶段，即pickup object
 	if(hState == segmented)
 	{
+		//这些工作应该放到鼠标操作里完成，这里只是标志进入pickup状态而已
+	   //memset(Iselected,0,256*4);
+	   //upimg.Destroy();
+	   //upimg.CopyOf(segimg);
+	   //GenObj();
+	   //GenGrayImage();
 	   hState = objcetPicked;
 	   connect(this,SIGNAL(PickupObject(QImage *)),segPictureDisplayWidget,SLOT(PickupObject(QImage *)));
 	}
+	//else
+	//{
+	//	hState = objectRePicked;
+
+	//}
 
 }
 
+//在meanshift分割后，原始照片每个像素都有会被分配一个区域
+//而此函数则在区域的基础之上，结合原始照片生成分割后的照片
 void QPictureDisplay::GenImage()
 {
 	// 为后续增加region创造方便
-	colors=new int[256];   // 可以直接当做局部变量
-	Iselected=new int[256];
-	memset(Iselected,0,256*4);
+	//int *colors=new int[256];   // 可以直接当做局部变量
+	int colors[256];
 
 	CvRNG rng= cvRNG(cvGetTickCount());
 	for(int i=0;i<regionCount;i++)
@@ -116,6 +119,7 @@ void QPictureDisplay::GenImage()
 		colors[i] = cvRandInt(&rng);
 	}
 
+	//Mat 是opencv 的一个n维的matrix，可以用来表示a matrix, image, optical flow map, 3-focal tensor etc.
 	IplImage *Iplorgimg=orgimg.GetImage();
 	cv::Mat org(Iplorgimg,0); // 0代表共用data,所以并不会创建新的data
 	IplImage *Iplresimg=resimg.GetImage();
@@ -133,11 +137,11 @@ void QPictureDisplay::GenImage()
 			(Iplresimg->imageData+i*Iplresimg->widthStep)[j*Iplresimg->nChannels+0]=(colors[cl])&255;
 		}
 
+		//org是原始照片，而res是分割后每个区域颜色一致的照片，seg是结果照片
+		//seg = org*0.5 + res*0.5 + 0 ;
 		cv::addWeighted(org,0.5,res,0.5,0,seg);
 		upimg.Destroy();
 		upimg.CopyOf(segimg);
-
-		//state=2;
 }
 
 void QPictureDisplay::GenGrayImage()
@@ -171,6 +175,7 @@ void QPictureDisplay::GenGrayImage()
 void QPictureDisplay::UpdateSelected(int x,int y)
 {
 	int label=labels[y][x];
+
 	if (Iselected[label]==0)
 		Iselected[label]=1;
 	else
@@ -180,13 +185,17 @@ void QPictureDisplay::UpdateSelected(int x,int y)
 // 点击后更新产生的图片UpImg
 // SegImg保存的是完整的原始图+罩层
 // UpImg保存点击事件后，应该显示的图片
+//整个方法的过程为如果某个像素对应的区域被选中，该区域的upimg则被恢复成原始图片
 void QPictureDisplay::UpdateRes()
 {
 	// 速度过慢，可以选则用opencv的iplimage处理后，再转换
 	int Theight = SrcImage->height();
 	int Twidth = SrcImage->width();
+
+	//此处确保每次只显示当前点击的object，上次点击如果保存了就不再显示，应该销毁
 	upimg.Destroy();
 	upimg.CopyOf(segimg);
+
 	for (int i=0;i<Theight;i++)
 		for (int j=0;j<Twidth;j++)
 		{
@@ -287,6 +296,7 @@ void QPictureDisplay::OpenImageFile(QImage *SourceImage)
 	ImageRect.setCoords(x,y,x+SrcImage->width(),y+SrcImage->height());
 
 	//这里给相应的照片都开辟内存空间，以准备分割的时候使用
+	//而obj 和 grayimg在此处未申请空间是因为他们的大小不固定
 	if(hState != emputy)
 	{
 		orgimg.Destroy();
@@ -350,13 +360,12 @@ void QPictureDisplay::mousePressEvent(QMouseEvent *event)
 		if (event->button()==Qt::LeftButton && ImageRect.contains(buttonDown))
 		{
 			    //由于对照片做了居中处理，所以此处对于button down的点需要做处理
-				UpdateSelected(buttonDown.x()-ImageRect.topLeft().x(),buttonDown.y()-ImageRect.topLeft().y());
-				UpdateRes();
-				GenObj();
-				GenGrayImage();
+				UpdateSelected(buttonDown.x()-ImageRect.topLeft().x(),buttonDown.y()-ImageRect.topLeft().y()); //记录被选择像素
+				UpdateRes();     //用来更新被分割原始图像（即显示部分左边内容）
+				GenObj();        //用来生成pickup object
+				GenGrayImage();  //用来生成灰度图像
 				emit PickupObject(IplImage2QImage(grayimg.GetImage()));
 				this->update();
-				//UpdateAllViews(NULL);
 		}
 	}	
 }
@@ -427,7 +436,28 @@ void QPictureDisplay::SaveSegObject(QString tag, int weight)
 	*/
 	//********************************
 
-	object->tag= tag.toStdString() ;
+	//object->tag= tag.toStdString() ;
+	object->tag = tag;
 	objects.push_back(object);
 	//this->ObjectPos++;
+
+	//为下次pickup做准备，清空此次选择内容
+	memset(Iselected,0,256*4);
 }
+
+//用于向mainwindow返回所有保存的object
+//void QPictureDisplay::SaveSegObjectList(int &objectNum)
+//{
+//	objectNum = objects.size();
+//	//if(objectNum != 0)
+//	//{
+//	//	objectList = new CSegObject*[objectNum];
+//	//	if(objectList != NULL)
+//	//	{
+//	//		for(int i = 0; i<objectNum ;i++)
+//	//		{
+//	//			objectList[i] = objects[i];
+//	//		}
+//	//	}
+//	//}
+//}

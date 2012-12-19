@@ -30,6 +30,7 @@ public:
 		void PickupObject(QImage *grayImage);  //用于接受QPictureDisplay的pickup signal，显示pickup object
 		void EraseImageAction();
 		void PaintImageAction();
+		void ClearDrawRect();    //用于接收mainwindow的消息用于在保存当前object之后清除当前seg窗口的物体
 
 private:
 	void mouseMoveEvent(QMouseEvent *event);
@@ -39,9 +40,10 @@ private:
 
 //attribute
 public:
-	enum ImgHandleState{handleStart, painting , erasing};
+	//其中cleanObject用于保存后清除绘图区域里的东西
+	enum ImgHandleState{handleStart, painting , erasing,cleanObject};
 	ImgHandleState sState;
-	QRect ImageRect;  //Image绘画的区间
+	QRect ImageRect;  //Image绘画的区间 
 	//bool isErase;       // 擦除？
 	//bool isDraw;        // 画图?
 	bool isLButtonDown; // 鼠标左键是否按下

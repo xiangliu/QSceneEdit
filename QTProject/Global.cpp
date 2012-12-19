@@ -29,3 +29,4 @@ QImage *IplImage2QImage(IplImage *src)
 	res=new QImage(imgData,src->width,src->height,QImage::Format_RGB888);
 	return res;
 }
+

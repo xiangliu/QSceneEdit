@@ -8,11 +8,14 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+	//在关闭的时候自动释放内存
+	//setAttribute(Qt::WA_DeleteOnClose);
+
 	// 属性设定
 	ui->setupUi(this);
 	scene=NULL;
 	SourceImage = NULL;
-	hState = imageProcess;
+	entireState = imageHandle;
 
 	CreateCentralWidget();
 	CreateDockWidget();
@@ -20,6 +23,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	CreateMenu();
 	CreateToolbar();
 	CreateConnections();
+
+
 }
 
 MainWindow::~MainWindow()
@@ -45,7 +50,7 @@ void MainWindow::CreateConnections()
 	connect(this,SIGNAL(SendPicDisMesg(QSegPictureDisplay *)),pictureDisplayWidget,SLOT(GetMainwMesg(QSegPictureDisplay *)));
 	connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));
 	connect(this,SIGNAL(SaveSegObject(QString ,int)),pictureDisplayWidget,SLOT(SaveSegObject(QString ,int)));
-
+	connect(this,SIGNAL(ClearDrawRect()),segPictureDisplayWidget,SLOT(ClearDrawRect()));
 	emit SendPicDisMesg(segPictureDisplayWidget);
 	//connect(this,SIGNAL(PickImageObject(int)),pictureDisplayWidget,SLOT(PickImageAction(int)));
 	//connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
@@ -88,6 +93,44 @@ void MainWindow::MOpenImageFile()
     //emit SetDisScene(scene);
 }
 
+////准备好存储所有分割object的内存
+//void MainWindow::PrepareRelations()
+//{
+//	if(twdObjectCount != 0)
+//	{
+//		relationship = new int[twdObjectCount*twdObjectCount];
+//		objectList = new CSegObject*[twdObjectCount];
+//	}
+//}
+
+void MainWindow::SetRelations()
+{
+	//数据准备阶段
+	setRelationDialog = new QSetRelationDialog;
+	setRelationDialog->objectCount = pictureDisplayWidget->objects.size();
+	int temp1 = setRelationDialog->objectCount;
+	setRelationDialog->objects = new CSegObject*[temp1] ;
+	for(int i = 0; i<temp1 ; i++)
+	{
+		setRelationDialog->objects[i] = pictureDisplayWidget->objects[i];
+	}
+	//生成保存所有relationship的内存地址
+	setRelationDialog->relationships = new int[temp1*temp1];
+	for(int i =0; i< temp1; i++)
+	{
+		for(int j = 0; j < temp1; j++)
+		{
+			setRelationDialog->relationships[i+temp1 + j] = 0;
+		}
+	}
+
+	//为两边的list生成数据
+	setRelationDialog->createModelTag();
+
+	setRelationDialog->show();
+
+}
+
 //当输入晚image tag，且对于image进行修改完毕，则click进行保存
 void  MainWindow::ClickImageSaveButton()
 {
@@ -103,8 +146,14 @@ void  MainWindow::ClickImageSaveButton()
 	QChar *t = w.data();
 	char temp1 = t[0].toAscii();
 	int wg = temp1 - '0';
+
 	//转移给QPictureDisplay.h去处理
 	emit SaveSegObject(imageTag ,wg);
+	emit ClearDrawRect();
+
+	//清空QLineEdit 和 QSpinBox 中的内容
+	tagEdit->clear();
+	weightSpinBox->setValue(5);
 
 }
 
@@ -202,6 +251,20 @@ void MainWindow::CreateActions()
 	eraseImageAction=new QAction(QIcon(":/image/eraser.png"),tr("擦除物体"),this);
 	connect(eraseImageAction,SIGNAL(triggered()),segPictureDisplayWidget,SLOT(EraseImageAction()));
 
+	//for create relationship for objects from image
+	createRelationAction = new QAction(QIcon(":/image/relationship.png"),tr("relationships"),this);
+	//connect(createRelationAction,SIGNAL(triggered()),pictureDisplayWidget,SLOT(SaveSegObjectList(&twdObjectCount,))); //这一步只能获取到有多少个object
+	//connect(createRelationAction,SIGNAL(triggered()),this,SLOT(PrepareRelations()));   //准备好保存object的内存和保存relationship的内存
+	//connect(createRelationAction,SIGNAL(triggered()),setRelationDialog,SLOT(GetSegObjectList(&pictureDisplayWidget->objects))); //可以直接赋值，不需要传递
+	connect(createRelationAction,SIGNAL(triggered()),this,SLOT(SetRelations()));  //触发生成dialog的事件
+
+	//for search for 3D scene list 
+	searchSceneAction = new QAction(QIcon(":/image/search.png"),tr("搜索3D场景"),this);
+	//connect(createRelationAction,SIGNAL(triggered()),segPictureDisplayWidget,SLOT(EraseImageAction()));
+
+	//for view the selected 3D scene 
+	view3DSceneAction = new QAction(QIcon(":/image/display.png"),tr("查看3D场景"),this);
+	//connect(createRelationAction,SIGNAL(triggered()),segPictureDisplayWidget,SLOT(EraseImageAction()));
 
 	chooseModelAction=new QAction(QIcon(":/image/choose.png"),tr("选择模型"),this);
 	connect(chooseModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
@@ -233,6 +296,11 @@ void MainWindow::CreateMenu()
 	imageEditMenu->addAction(paintImageAction);
 	imageEditMenu->addAction(eraseImageAction);
 
+	searchMenu = ui->menuBar->addMenu(tr("场景检索"));
+	searchMenu->addAction(createRelationAction);
+	searchMenu->addAction(searchSceneAction);
+	searchMenu->addAction(view3DSceneAction);
+
 	modelEditMenu=ui->menuBar->addMenu(tr("模型编辑"));
 	modelEditMenu->addAction(chooseModelAction);
 	modelEditMenu->addAction(transModelAction);
@@ -256,6 +324,11 @@ void MainWindow::CreateToolbar()
 	segImageToolBar->addAction(paintImageAction);
 	segImageToolBar->addAction(eraseImageAction);
 
+	searchToolBar = addToolBar(tr("场景检索"));
+	searchToolBar->addAction(createRelationAction);
+	searchToolBar->addAction(searchSceneAction);
+	searchToolBar->addAction(view3DSceneAction);
+
 	editModelToolBar=addToolBar(tr("模型编辑"));
 	editModelToolBar->addAction(chooseModelAction);
 	editModelToolBar->addAction(transModelAction);
@@ -268,9 +341,8 @@ void MainWindow::CreateToolbar()
 
 void MainWindow::CreateDockWidget()
 {
-
      //tree widget of the 3D scene
-	if(hState == threeDProcess)
+	if(entireState == threeDProcess)
 	{
 		// 树形结构
 		treeWidget=new QTreeWidget;
@@ -286,7 +358,7 @@ void MainWindow::CreateDockWidget()
 		//此处可能要隐藏前面添加的image handle 的toolbox
 		addDockWidget(Qt::RightDockWidgetArea,rdocWidget);
 	} 
-	else if(hState == imageProcess) //right toolbox of image handle
+	else if(entireState == imageHandle) //right toolbox of image handle
 	{
 
 	}
@@ -300,7 +372,6 @@ void MainWindow::CreateCentralWidget()
 	//照片显示部分变量初始化
 	pictureDisplayWidget = new QPictureDisplay;
 	segPictureDisplayWidget = new QSegPictureDisplay;
-	relationDisplayWidget = new QRelationDisplay;
 	//tagDisplayWidget = new QTagDisplay;
 	/*
 	// 界面内容层次结构
@@ -333,8 +404,8 @@ void MainWindow::CreateCentralWidget()
 	rightSplitter = new QSplitter(Qt::Vertical);
 	rightSplitter->addWidget(tagWidget);
 	rightSplitter->addWidget(segPictureDisplayWidget);
-	rightSplitter->addWidget(relationDisplayWidget);
-	rightSplitter->setStretchFactor(0,2);
+	//rightSplitter->addWidget(relationDisplayWidget);
+	//rightSplitter->setStretchFactor(0,2);
 
 	mainSplitter = new QSplitter(Qt::Horizontal);
 	mainSplitter->addWidget(pictureDisplayWidget);
@@ -346,6 +417,9 @@ void MainWindow::CreateCentralWidget()
 	mainLayout->addWidget(mainSplitter,0,0);
 
 	ui->centralWidget->setLayout(mainLayout);
+
+	//为设置relationship准备变量，推迟到trigger事件的时候再去创立
+	//setRelationDialog = new QSetRelationDialog;
 
 	// 界面主层次结构
 	//ui->centralWidget->setLayout(gridLayout);

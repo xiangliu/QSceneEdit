@@ -42,8 +42,8 @@ protected:
 
 //attribute:
 public:
-
-	enum handleImageState {emputy , loaded ,segmented , objcetPicked};
+	//其中objectRePicked代表第二次pickup object
+	enum handleImageState {emputy , loaded ,segmented , objcetPicked,objectRePicked};
 	handleImageState hState ;
 	//int HandleImage ;    // 0 represents not laoded yet;1--loaded;2--segmented; 3--picked object
 	QImage *SrcImage;    // represent the loaded image;
@@ -54,21 +54,21 @@ public:
 	// 分割相关属性
     //int isSegmented;    // is the image been segmented, 0 represents not segmented yet
 	int **labels;       // 对应图像每个像素的label
-	int regionCount;    // region的个数
-	int* colors;        // 各region对应的color
+	int regionCount;    // region的个数,这里能确定region个数不超过256吗，如果超过，GenImage()则会出现错误
+	//int* colors;        // 各region对应的color --修改成局部变量了
 	int* Iselected;     // 哪些region被选中了
 
 	CvvImage orgimg;  // 原始读入图片
 	CvvImage segimg;  // 分割后图片
 	CvvImage resimg;  // 罩上的图层
-	CvvImage upimg;   // 点击事件后更新的图片
+	CvvImage upimg;   // 点击事件后更新的图片,最开始和segimg一致
 	CvvImage obj;     //原始图片中被选中的某个物体
-	CvvImage grayimg; // 物体生成对应的灰度图
+	CvvImage grayimg; // pickup物体生成对应的灰度图
 	vector<CSegObject*> objects; // 分割出的物体
 
 	//交互相关变量
 	QPoint buttonDown; // 鼠标按下时，屏幕点的位置
-	bool ClearPickupObject;  //当新的点击产生时，是否清楚原来现实的object
+	//bool ClearPickupObject;  //当新的点击产生时，是否清楚原来现实的object
 	QRect ImageRect;  //表示载入image所在的区域
 
 	//widget之间的connection
@@ -83,7 +83,7 @@ public slots:
 	void OpenImageFile(QImage *SourceImage);  //响应在mainwindow中载入照片的action
 	void GetMainwMesg(QSegPictureDisplay *segPicDispWidget); //从mainwindow获得QSegPictureDisplay的指针
 	void SaveSegObject(QString tag, int weight); //用于保存分割好的object
-
+	//void SaveSegObjectList(int &objectNum); //用于向mainwindow返回所有保存的object
 private:
     //Ui::QPictureDisplay *ui;
 };

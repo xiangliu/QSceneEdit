@@ -67,8 +67,6 @@ public:
 	box bbox; //包围盒
 	BSphere bsphere; // 包围球
 
-
-
 	// 主要操作方法
 public:
     bool readScene(const char* filename);

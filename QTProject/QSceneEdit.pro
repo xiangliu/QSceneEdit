@@ -39,12 +39,13 @@ SOURCES += main.cpp\
     trimesh/conn_comps.cc \
     Global.cpp \
     QSceneDisplay.cpp \
+    MathLib.cpp \
     Model.cpp \
     Material.cpp \
     Scene.cpp \
     QPictureDisplay.cpp \
     QSegPictureDisplay.cpp \
-    QRelationDisplay.cpp \
+    QSetRelationDialog.cpp \
     QSearchListDisplay.cpp \
     QTagDisplay.cpp \
     ImageSeg/SegObject.cpp \
@@ -68,6 +69,7 @@ HEADERS  += mainwindow.h \
     trimesh/bsphere.h \
     trimesh/Box.h \
     Global.h \
+    MathLib.h \
     Model.h \
     Material.h \
     BaseStruct.h \
@@ -76,7 +78,7 @@ HEADERS  += mainwindow.h \
     QSceneDisplay.h \
     QPictureDisplay.h \
     QSegPictureDisplay.h \
-    QRelationDisplay.h \
+    QSetRelationDialog.h \
     QSearchListDisplay.h \
     QTagDisplay.h \
     ImageSeg/SegObject.h \
