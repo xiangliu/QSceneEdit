@@ -61,4 +61,9 @@ struct SMesh{
 	int faceEnd;
 };
 
+typedef struct LightModel{
+	string modelName;
+	string modelTag;
+}LightModel;
+
 #endif

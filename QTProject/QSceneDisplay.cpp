@@ -14,7 +14,7 @@ QSceneDisplay::QSceneDisplay(QWidget *parent)
 	scene=NULL;
 	up[0]=up[2]=0;
 	up[1]=1;
-	state=0; // 平移物体
+	sceneDisplayState = PrepareState; // 平移物体
 	selectModel=-1;
 	glProjectionM=new GLdouble[16];
 	glModelM=new GLdouble[16];
@@ -94,7 +94,7 @@ void QSceneDisplay::mouseMoveEvent(QMouseEvent *event)
 	QPoint point=event->pos();
 	if (event->buttons() & Qt::LeftButton)
 	{
-		if(state==0)
+		if(sceneDisplayState == PrepareState )
 		{
 			float dx=float(point.x()-btnDown.x())*(plane[1]-plane[0])/width(); // 转换到视景体移动的距离
 			float dy=float(btnDown.y()-point.y())*(plane[3]-plane[2])/height();
@@ -104,7 +104,7 @@ void QSceneDisplay::mouseMoveEvent(QMouseEvent *event)
 			plane[3]-=dy;
 			//btnDown=point;
 		}
-		else if (state==3 && isSelectedModelValid())
+		else if (sceneDisplayState== ObjectTranslation && isSelectedModelValid())
 		{
 			GLdouble ax,ay,az,bx,by,bz;
 			int invert_y=height()-btnDown.y();
@@ -116,7 +116,7 @@ void QSceneDisplay::mouseMoveEvent(QMouseEvent *event)
 			model->ty+=by-ay;
 			model->tz+=bz-az;
 		}
-		else if(state==4 && isSelectedModelValid())
+		else if(sceneDisplayState==ObjectRotation && isSelectedModelValid())
 		{
 			Model* model=scene->sceneModels[selectModel];
 			model->xangle+=double(point.y()-btnDown.y())/3.6;
@@ -168,7 +168,7 @@ void QSceneDisplay::mousePressEvent(QMouseEvent *event)
 	btnDown=event->pos();
 	if (event->button()==Qt::LeftButton)
 	{
-		if (state==0)
+		if (sceneDisplayState==PrepareState)
 			ProcessSelection(btnDown.x(),btnDown.y());
 		//else if (state==3 && isSelectedModelValid())
 		//{
@@ -185,7 +185,7 @@ void QSceneDisplay::mousePressEvent(QMouseEvent *event)
 
 void QSceneDisplay::wheelEvent(QWheelEvent *event)
 {
-	if (state==0)
+	if (sceneDisplayState==PrepareState)
 	{
 		double numDegrees = -event->delta() / 8.0;
 		double numSteps = numDegrees / 15.0;
@@ -200,11 +200,11 @@ void QSceneDisplay::wheelEvent(QWheelEvent *event)
 		plane[2]=centery-height/2;
 		plane[3]=centery+height/2;
 	}
-	else if (state>2 && isSelectedModelValid())
+	else if (sceneDisplayState > 2 && isSelectedModelValid())
 	{
 		double numDegrees = event->delta() / 8.0;
 		double numSteps = numDegrees / 15.0;
-		scene->sceneModels[selectModel]->scale *=pow(1.125, numSteps);;
+		scene->sceneModels[selectModel]->scaled *=pow(1.125, numSteps);;
 		//scene->sceneModels[selectModel]->scale+=event->delta()/100;
 	}
 	this->updateGL();
@@ -265,7 +265,7 @@ void QSceneDisplay::DrawScene()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	//gluLookAt(eye[0],eye[1],eye[2],scene->bsphere.center[0],scene->bsphere.center[1],scene->bsphere.center[2],up[0],up[1],up[2]);
-	if(state>2 && isSelectedModelValid())
+	if(sceneDisplayState > 2 && isSelectedModelValid())
 		SetProjectionModelView();
 
 	glInitNames();
@@ -287,7 +287,7 @@ void QSceneDisplay::DrawScene()
 
 void QSceneDisplay::ChooseModelAction()
 {
-	state=0; // 选择模型
+	sceneDisplayState = PrepareState; // 选择模型
 }
 
 void QSceneDisplay::ProcessSelection( int xPos,int yPos )
@@ -343,12 +343,13 @@ void QSceneDisplay::ProcessModels( GLuint *pSelectBuff )
 
 void QSceneDisplay::TransModelAction()
 {
-	state=3;
+	sceneDisplayState = ObjectTranslation;
 }
 
 void QSceneDisplay::RotateModelAction()
 {
-	state=4;
+	//state=4;
+	sceneDisplayState = ObjectRotation;
 }
 
 bool QSceneDisplay::isSelectedModelValid()

@@ -1,8 +1,17 @@
+/************************************************************************/
+/* 修改1.CreateActions()中的view3DSceneAction 被注释掉了，因为暂时不需要这个菜单，而是由检索直接跳转进入
+修改2. 跟3D场景显示相关的	CreateCentralWidget();CreateDockWidget();CreateActions();
+       CreateMenu();CreateToolbar();CreateConnections(); 都最后放到鼠标响应事件中处理，因此会出现动态的菜单
+*/
+/************************************************************************/
+#include <string>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QIcon>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "3DFeatureExtract/FeatureExtract.h"
+#include "3DSearch/search.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -16,6 +25,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	scene=NULL;
 	SourceImage = NULL;
 	entireState = imageHandle;
+	objectList = NULL;
+	relationship = NULL;
+	this->pSceneMatResult = new SceneMatRes[SCENEFORDISPLAY];
 
 	CreateCentralWidget();
 	CreateDockWidget();
@@ -34,12 +46,6 @@ MainWindow::~MainWindow()
 
 	//sceneDisplayWidget->destroy();
 
-	////照片显示部分变量初始化
-	//pictureDisplayWidget = new QPictureDisplay;
-	//segPictureDisplayWidget = new QSegPictureDisplay;
-
-	//// 界面内容层次结构
-	//gLayout=new QGridLayout;
     delete ui;
 }
 
@@ -48,7 +54,7 @@ void MainWindow::CreateConnections()
 	//mainwindow和其他widget的联系，区别与createAction里头的，那是toolbar和Menu的connection
 	connect(this,SIGNAL(OpenImageFile(QImage *)),pictureDisplayWidget,SLOT(OpenImageFile(QImage *)));
 	connect(this,SIGNAL(SendPicDisMesg(QSegPictureDisplay *)),pictureDisplayWidget,SLOT(GetMainwMesg(QSegPictureDisplay *)));
-	connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));
+	//connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));
 	connect(this,SIGNAL(SaveSegObject(QString ,int)),pictureDisplayWidget,SLOT(SaveSegObject(QString ,int)));
 	connect(this,SIGNAL(ClearDrawRect()),segPictureDisplayWidget,SLOT(ClearDrawRect()));
 	emit SendPicDisMesg(segPictureDisplayWidget);
@@ -64,12 +70,40 @@ void MainWindow::OpenSceneFile()
 	scene=new Scene;
     //QString fileName=QFileDialog::getOpenFileName(this,tr("Open Scene File"),".",tr("obj file(*.obj)"));
     //QString fileName="E:\\QtProjects\\QSceneEdit\\conference_room26\\conference_room26.obj";
-    QString fileName="E:\\QTProject\\conference_room26.obj";
+    QString fileName="E:\\conference_room26.obj";
 	bool flag=scene->readScene(fileName.toStdString().c_str());
     if(!flag)
+	{
         QMessageBox::warning(this,tr("ReadScene"),tr("Open Scene File Error"),QMessageBox::Yes);
+		return;
+	}
 
-	CreateRelationItem();
+	//CreateRelationItem();  //暂时注释掉
+	emit SetDisScene(scene);
+}
+
+bool MainWindow::OpenSceneOfSearch(const char *threeDSceneFilePath)
+{   //检查路径是否为空
+	if(threeDSceneFilePath == NULL)
+	{
+		QMessageBox::warning(this,tr("ReadScene"),tr("Scene File Path Error"),QMessageBox::Yes);
+		return false;
+	}
+
+	if(scene!=NULL)
+	{
+		delete scene;
+	}
+	scene=new Scene;
+	
+	bool flag=scene->readScene(threeDSceneFilePath);
+	if(!flag)
+	{
+		QMessageBox::warning(this,tr("ReadScene"),tr("Open Scene File Error"),QMessageBox::Yes);
+	    return false;
+	}
+
+	//CreateRelationItem();
 	emit SetDisScene(scene);
 }
 
@@ -103,35 +137,50 @@ void MainWindow::MOpenImageFile()
 //	}
 //}
 
+//直接为image分割后的所有object设定relationship
 void MainWindow::SetRelations()
 {
-	//数据准备阶段
-	setRelationDialog = new QSetRelationDialog;
-	setRelationDialog->objectCount = pictureDisplayWidget->objects.size();
-	int temp1 = setRelationDialog->objectCount;
-	setRelationDialog->objects = new CSegObject*[temp1] ;
-	for(int i = 0; i<temp1 ; i++)
+	//证明整个过程的有序性
+	if(entireState == imageHandle)
 	{
-		setRelationDialog->objects[i] = pictureDisplayWidget->objects[i];
-	}
-	//生成保存所有relationship的内存地址
-	setRelationDialog->relationships = new int[temp1*temp1];
-	for(int i =0; i< temp1; i++)
-	{
-		for(int j = 0; j < temp1; j++)
+		//数据准备阶段
+		setRelationDialog = new QSetRelationDialog;
+		setRelationDialog->objectCount = pictureDisplayWidget->objects.size();
+		int temp1 = setRelationDialog->objectCount;
+		setRelationDialog->objects = new CSegObject*[temp1] ;
+		for(int i = 0; i<temp1 ; i++)
 		{
-			setRelationDialog->relationships[i+temp1 + j] = 0;
+			setRelationDialog->objects[i] = pictureDisplayWidget->objects[i];
 		}
+		
+		//生成保存所有relationship的内存地址
+		//setRelationDialog->relationships = new int[temp1*temp1];
+		//for(int i =0; i< temp1; i++)
+		//{
+		//	for(int j = 0; j < temp1; j++)
+		//	{
+		//		setRelationDialog->relationships[i+temp1 + j] = 0;
+		//	}
+		//}
+		setRelationDialog->relationships = new int*[temp1];
+		for(int i = 0 ;i < temp1; i++)
+		{
+			setRelationDialog->relationships[i] = new int[temp1];
+			memset(setRelationDialog->relationships[i],0,temp1*4);
+		}
+
+		//转换状态
+		entireState = setRelationship;
+
+		//为两边的list生成数据
+		setRelationDialog->createModelTag();
+
+		setRelationDialog->show();
 	}
-
-	//为两边的list生成数据
-	setRelationDialog->createModelTag();
-
-	setRelationDialog->show();
 
 }
 
-//当输入晚image tag，且对于image进行修改完毕，则click进行保存
+//当输入完image tag，且对于image进行修改完毕，则click进行保存
 void  MainWindow::ClickImageSaveButton()
 {
 	QString imageTag;
@@ -154,7 +203,6 @@ void  MainWindow::ClickImageSaveButton()
 	//清空QLineEdit 和 QSpinBox 中的内容
 	tagEdit->clear();
 	weightSpinBox->setValue(5);
-
 }
 
 void MainWindow::SaveSceneFile()
@@ -234,8 +282,8 @@ void MainWindow::CreateActions()
     openSceneAction=new QAction(QIcon(":/image/open.png"),tr("打开照片"),this);
 	connect(openSceneAction,SIGNAL(triggered()),this,SLOT(MOpenImageFile()));
 	
-    saveSceneAction=new QAction(QIcon(":/image/save.png"),tr("保存场景"),this);
-    connect(saveSceneAction,SIGNAL(triggered()),this,SLOT(SaveSceneFile()));
+ /*   saveSceneAction=new QAction(QIcon(":/image/save.png"),tr("保存场景"),this);
+    connect(saveSceneAction,SIGNAL(triggered()),this,SLOT(SaveSceneFile()));*/
 
 	//for segment image
 	segImageAction = new QAction(QIcon(":/image/segment.png"),tr("分割照片"),this);
@@ -260,13 +308,13 @@ void MainWindow::CreateActions()
 
 	//for search for 3D scene list 
 	searchSceneAction = new QAction(QIcon(":/image/search.png"),tr("搜索3D场景"),this);
-	//connect(createRelationAction,SIGNAL(triggered()),segPictureDisplayWidget,SLOT(EraseImageAction()));
+	connect(searchSceneAction,SIGNAL(triggered()),this,SLOT(Search3DScenes()));
 
 	//for view the selected 3D scene 
-	view3DSceneAction = new QAction(QIcon(":/image/display.png"),tr("查看3D场景"),this);
+	//view3DSceneAction = new QAction(QIcon(":/image/display.png"),tr("查看3D场景"),this);
 	//connect(createRelationAction,SIGNAL(triggered()),segPictureDisplayWidget,SLOT(EraseImageAction()));
 
-	chooseModelAction=new QAction(QIcon(":/image/choose.png"),tr("选择模型"),this);
+	/*chooseModelAction=new QAction(QIcon(":/image/choose.png"),tr("选择模型"),this);
 	connect(chooseModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
 	
 
@@ -280,7 +328,7 @@ void MainWindow::CreateActions()
 	connect(transSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
 
 	rotateSceneAction=new QAction(QIcon(":/image/rotate.png"),tr("旋转场景"),this);
-	connect(rotateSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+	connect(rotateSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));*/
 
 }
 
@@ -288,7 +336,7 @@ void MainWindow::CreateMenu()
 {
 	fileMenu=ui->menuBar->addMenu(tr("文件"));
 	fileMenu->addAction(openSceneAction);
-	fileMenu->addAction(saveSceneAction);
+	//fileMenu->addAction(saveSceneAction);
 
 	imageEditMenu = ui->menuBar->addMenu(tr("照片处理"));
 	imageEditMenu->addAction(segImageAction);
@@ -299,16 +347,16 @@ void MainWindow::CreateMenu()
 	searchMenu = ui->menuBar->addMenu(tr("场景检索"));
 	searchMenu->addAction(createRelationAction);
 	searchMenu->addAction(searchSceneAction);
-	searchMenu->addAction(view3DSceneAction);
+	//searchMenu->addAction(view3DSceneAction);
 
-	modelEditMenu=ui->menuBar->addMenu(tr("模型编辑"));
-	modelEditMenu->addAction(chooseModelAction);
-	modelEditMenu->addAction(transModelAction);
-	modelEditMenu->addAction(rotateModelAction);
+	//modelEditMenu=ui->menuBar->addMenu(tr("模型编辑"));
+	//modelEditMenu->addAction(chooseModelAction);
+	//modelEditMenu->addAction(transModelAction);
+	//modelEditMenu->addAction(rotateModelAction);
 
-	sceneEditMenu=ui->menuBar->addMenu(tr("场景编辑"));
-	sceneEditMenu->addAction(transSceneAction);
-	sceneEditMenu->addAction(rotateSceneAction);
+	//sceneEditMenu=ui->menuBar->addMenu(tr("场景编辑"));
+	//sceneEditMenu->addAction(transSceneAction);
+	//sceneEditMenu->addAction(rotateSceneAction);
 
 }
 
@@ -316,7 +364,7 @@ void MainWindow::CreateToolbar()
 {
 	fileToolBar=addToolBar(tr("文件"));
 	fileToolBar->addAction(openSceneAction);
-	fileToolBar->addAction(saveSceneAction);
+	//fileToolBar->addAction(saveSceneAction);
 
 	segImageToolBar = addToolBar(tr("照片处理"));
 	segImageToolBar->addAction(segImageAction);
@@ -327,16 +375,16 @@ void MainWindow::CreateToolbar()
 	searchToolBar = addToolBar(tr("场景检索"));
 	searchToolBar->addAction(createRelationAction);
 	searchToolBar->addAction(searchSceneAction);
-	searchToolBar->addAction(view3DSceneAction);
+	//searchToolBar->addAction(view3DSceneAction);
 
-	editModelToolBar=addToolBar(tr("模型编辑"));
-	editModelToolBar->addAction(chooseModelAction);
-	editModelToolBar->addAction(transModelAction);
-	editModelToolBar->addAction(rotateModelAction);
+	//editModelToolBar=addToolBar(tr("模型编辑"));
+	//editModelToolBar->addAction(chooseModelAction);
+	//editModelToolBar->addAction(transModelAction);
+	//editModelToolBar->addAction(rotateModelAction);
 
-	editSceneToolBar=addToolBar(tr("场景编辑"));
-	editSceneToolBar->addAction(transSceneAction);
-	editSceneToolBar->addAction(rotateSceneAction);
+	//editSceneToolBar=addToolBar(tr("场景编辑"));
+	//editSceneToolBar->addAction(transSceneAction);
+	//editSceneToolBar->addAction(rotateSceneAction);
 }
 
 void MainWindow::CreateDockWidget()
@@ -367,20 +415,18 @@ void MainWindow::CreateDockWidget()
 void MainWindow::CreateCentralWidget()
 {
 	// 界面设定&&部件初始化
-	sceneDisplayWidget=new QSceneDisplay;
+	//stackedWidget = new QStackedWidget(this);
 
+   // picturePartWidget = new QWidget;
+	//sceneDisplayWidget=new QSceneDisplay(ui->centralWidget);
+	//sceneDisplayWidget->hide();
 	//照片显示部分变量初始化
 	pictureDisplayWidget = new QPictureDisplay;
 	segPictureDisplayWidget = new QSegPictureDisplay;
-	//tagDisplayWidget = new QTagDisplay;
-	/*
-	// 界面内容层次结构
-	gridLayout=new QGridLayout;
-	gridLayout->addWidget(pictureDisplayWidget,0,0);
-	gridLayout->addWidget(segPictureDisplayWidget,0,1);
-	//hlayout->addWidget(sceneDisplayWidget);
-	*/
-	
+	//pictureDisplayWidget = new QPictureDisplay(picturePartWidget);  //此处设置其为picturePartWidget的子窗口
+	//segPictureDisplayWidget = new QSegPictureDisplay(picturePartWidget);
+
+	//********************* 全部是第一个页面（照片分割、提取、保存）的布局相关*****************************
 	tagLayout = new QHBoxLayout;
 	tagLabel = new QLabel(tr("Tag of Object:"));
 	tagEdit = new QLineEdit;
@@ -423,7 +469,210 @@ void MainWindow::CreateCentralWidget()
 
 	// 界面主层次结构
 	//ui->centralWidget->setLayout(gridLayout);
+}
 
+void MainWindow::Search3DScenes()
+{
+	QString errMessage;  //用来保存出错信息
+	char err[100];
+	char* filename = "src_Image";
+
+	//证明上一步已经完成了relationship的设置
+	if(entireState == setRelationship)
+	{
+		//将relationship中的数据保存过来
+		this->relationship = setRelationDialog->relationships;
+		setRelationDialog->relationships = NULL;
+		this->objectList = setRelationDialog->objects;
+		setRelationDialog->objects = NULL;
+		this->twdObjectCount = setRelationDialog->objectCount;
+
+		//为分割后的每张照片提取描述子
+		for (int i = 0; i< twdObjectCount ; i++)
+		{
+			if(!FeatureExtractForPictureScene(err, *objectList[i],i,filename))
+			{
+				QMessageBox::warning(this,tr("Feature Extract"),tr("Feature Extract failed:"),QMessageBox::Yes);
+				return;
+				//MessageBox("Feature Extract of the picture failed：%s",err);
+			}
+		}
+		QMessageBox::information(this,tr("Feature Extract"),tr("Feature Extract finished!"),QMessageBox::Yes);
+
+		//将数据转移到twdScene之中
+		this->twdScene.modelNum = this->twdObjectCount;
+		strcpy(twdScene.pictureFilename,"src_Image");
+
+		for(int i = 0 ; i< twdObjectCount ; i++)
+		{
+			//第一步拷贝tag
+			strcpy(twdScene.tag1[i],pictureDisplayWidget->objects[i]->tag.toStdString().c_str());
+			//第二步拷贝importance
+			twdScene.importance[i] = (float)pictureDisplayWidget->objectImportance[i];
+			////第三步拷贝relationship---转换出问题了，因为是从int转成了char
+			//for (int j = 0; j < twdObjectCount ; j++)
+			//{
+			//	twdScene.relationship[i][j] = relationship[i][j];
+			//}
+		}
+
+		//检索
+		//if(!Find3DSceneFromBuffer(twdScene,err,pSceneMatResult))
+		int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);
+		if(!resultSum)
+		{
+			//MessageBox("Scene search failed：%s",err);
+			QMessageBox::warning(this,tr("Scenes Search"),tr("Search failed!"),QMessageBox::Yes);
+			return;
+		}
+		else
+		{
+			QMessageBox::information(this,tr("Scenes Search"),tr("Search finished!"),QMessageBox::Yes);
+		}
+
+		//进行整体处理状态的改变
+		this->entireState = search3DScene;
+
+		//char tempFilePath[200];
+		FILE *fpt;
+		fpt = fopen("SearchResult\\NewSceneDisplay.txt", "rb");
+		if(fpt == NULL)
+		{
+			//sprintf(err,"Can't open file : q8_table! \n");
+		}
+		//处理检索到的数据
+		string temp;
+		string temp1;
+		int index;
+		for(int i = 0; i< resultSum ; i++)
+		{
+			fgets(pSceneMatResult[i].name, 200, fpt);
+			temp.assign(pSceneMatResult[i].name);
+			//temp = string(pSceneMatResult[i].name);
+			temp1 = temp.substr(0,temp.find_last_of('/'));
+			index = temp1.find_last_of('/');
+			temp = temp1.substr(index,temp1.size());
+			temp = temp1+temp;
+			strcpy(pSceneMatResult[i].name,temp.c_str());
+		}
+		fclose(fpt);
+
+		//然后要进行页面的跳转，调到3DSceneList页面去
+		mainLayout->removeWidget(mainSplitter);
+		mainSplitter->hide();
+		searchListDisplayWidget = new QSearchListDisplay(ui->centralWidget);
+		searchListDisplayWidget->resize(ui->centralWidget->width(),ui->centralWidget->height());
+		//searchListDisplayWidget = new QSearchListDisplay;
+		//传递检索数据
+		searchListDisplayWidget->pSceneMatResult = this->pSceneMatResult;
+		//让searchListDisplayWidget去load image
+		searchListDisplayWidget->downlaodSceneImage(ui->centralWidget->width(),ui->centralWidget->height());
+
+		//1.首先移除原有的widget 
+		//mainLayout->removeWidget(mainSplitter);
+		//mainSplitter->hide();
+		//2.加入新的widget
+		sceneListLayout = new QGridLayout;
+		sceneListLayout->addWidget(searchListDisplayWidget);
+		ui->centralWidget->setLayout(sceneListLayout);
+		//ui->centralWidget->show();
+		searchListDisplayWidget->showMaximized();
+		//searchListDisplayWidget->show();
+	}
+}
+
+/******本函数目前为止只用来处理从3D场景列表到浏览单个场景的跳转******/
+void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
+{
+	//这里设置的场景序号是从0开始到7
+	if(this->entireState == search3DScene)
+	{
+		setMouseTracking(true);
+		QPoint buttonDown = event->pos();
+		//int x = 
+		int temp = buttonDown.rx()/(searchListDisplayWidget->imageWidth);
+		int a = buttonDown.rx() > (searchListDisplayWidget->imageWidth)*temp ? temp:temp-1;
+		int b = buttonDown.ry() > (searchListDisplayWidget->imageHeight) ? 1:0;
+		this->selcted3DScene = b*4+ a;
+
+		//阶段跳转
+		this->entireState = threeDProcess;
+
+
+		//*********准备3D场景显示相关的工作**************
+		sceneDisplayWidget=new QSceneDisplay(ui->centralWidget);
+
+		//create action
+		saveSceneAction=new QAction(QIcon(":/image/save.png"),tr("保存场景"),this);
+		connect(saveSceneAction,SIGNAL(triggered()),this,SLOT(SaveSceneFile()));
+
+		chooseModelAction=new QAction(QIcon(":/image/choose.png"),tr("选择模型"),this);
+		connect(chooseModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+
+		transModelAction=new QAction(QIcon(":/image/obj_trans.png"),tr("平移物体"),this);
+		connect(transModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(TransModelAction()));
+
+		rotateModelAction=new QAction(QIcon(":/image/obj_rotate.png"),tr("旋转物体"),this);
+		connect(rotateModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(RotateModelAction()));
+
+		transSceneAction=new QAction(QIcon(":/image/trans.png"),tr("平移场景"),this);
+		connect(transSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+
+		rotateSceneAction=new QAction(QIcon(":/image/rotate.png"),tr("旋转场景"),this);
+		connect(rotateSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+
+		//add menu
+		fileMenu->addAction(saveSceneAction);  //这个是在文件菜单那一栏，比较特殊一点
+
+		modelEditMenu=ui->menuBar->addMenu(tr("模型编辑"));
+		modelEditMenu->addAction(chooseModelAction);
+		modelEditMenu->addAction(transModelAction);
+		modelEditMenu->addAction(rotateModelAction);
+
+		sceneEditMenu=ui->menuBar->addMenu(tr("场景编辑"));
+		sceneEditMenu->addAction(transSceneAction);
+		sceneEditMenu->addAction(rotateSceneAction);
+
+		//create toolbar
+		fileToolBar->addAction(saveSceneAction);
+
+		editModelToolBar=addToolBar(tr("模型编辑"));
+		editModelToolBar->addAction(chooseModelAction);
+		editModelToolBar->addAction(transModelAction);
+		editModelToolBar->addAction(rotateModelAction);
+
+		editSceneToolBar=addToolBar(tr("场景编辑"));
+		editSceneToolBar->addAction(transSceneAction);
+		editSceneToolBar->addAction(rotateSceneAction);
+
+		//create connection
+		connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));
+		connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+		
+		
+		//1.获取场景,如果失败则用message提示
+		string temp1 = string(this->pSceneMatResult[this->selcted3DScene].name)+".obj";
+		//if(OpenSceneOfSearch(this->pSceneMatResult[this->selcted3DScene].name) )
+		//if(OpenSceneOfSearch( temp1.c_str()) )
+		//{
+		//	QMessageBox::warning(this,tr("Scenes Loading"),tr("Scene Laod failed!"),QMessageBox::Yes);
+		//	return;
+		//}
+		OpenSceneOfSearch( temp1.c_str());
+		/*this->OpenSceneFile();*/
+
+		//准备显示场景的widget
+		sceneListLayout->removeWidget(searchListDisplayWidget);
+		searchListDisplayWidget->hide();
+
+		sceneDisplayWidget->resize(ui->centralWidget->width(),ui->centralWidget->height());
+
+		threeDSceneLayout = new QGridLayout(ui->centralWidget);
+		threeDSceneLayout->addWidget(sceneDisplayWidget);
+		ui->centralWidget->setLayout(threeDSceneLayout);
+		sceneDisplayWidget->showMaximized();
+		
+	}	
 }
 
 

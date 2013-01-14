@@ -126,43 +126,43 @@ void QSetRelationDialog::SaveRelations(int index)
 	{
 	//Group_Center,1,-1
 	case 0:
-		relationships[leftChoice*objectCount + rightChoice] = 1;
-		relationships[rightChoice*objectCount + leftChoice] = -1;
+		relationships[leftChoice][rightChoice] = 1;
+		relationships[rightChoice][leftChoice] = -1;
 		break;
 	//Group_Element
 	case 1:
-		relationships[leftChoice*objectCount + rightChoice] = -1;
-		relationships[rightChoice*objectCount + leftChoice] = 1;
+		relationships[leftChoice][rightChoice] = -1;
+		relationships[rightChoice][leftChoice] = 1;
 		break;
 	//Support, 5, -5
 	case 2:
-		relationships[leftChoice*objectCount + rightChoice] = 5;
-		relationships[rightChoice*objectCount + leftChoice] = -5;
+		relationships[leftChoice][rightChoice] = 5;
+		relationships[rightChoice][leftChoice] = -5;
 		break;
 	//Be_Supported
 	case 3:
-		relationships[leftChoice*objectCount + rightChoice] = -5;
-		relationships[rightChoice*objectCount + leftChoice] = 5;
+		relationships[leftChoice][rightChoice] = -5;
+		relationships[rightChoice][leftChoice] = 5;
 		break;
 	//Identical 6,6
 	case 4:
-		relationships[leftChoice*objectCount + rightChoice] = 6;
-		relationships[rightChoice*objectCount + leftChoice] = 6;
+		relationships[leftChoice][rightChoice] = 6;
+		relationships[rightChoice][leftChoice] = 6;
 		break;
 	//Contact  7,7
 	case 5:
-		relationships[leftChoice*objectCount + rightChoice] = 7;
-		relationships[rightChoice*objectCount + leftChoice] = 7;
+		relationships[leftChoice][rightChoice] = 7;
+		relationships[rightChoice][leftChoice] = 7;
 		break;
 	//Enclosure 8,-8
 	case 6:
-		relationships[leftChoice*objectCount + rightChoice] = 8;
-		relationships[rightChoice*objectCount + leftChoice] = -8;
+		relationships[leftChoice][rightChoice] = 8;
+		relationships[rightChoice][leftChoice] = -8;
 		break;
 	//Be_Enclosured
 	case 7:
-		relationships[leftChoice*objectCount + rightChoice] = -8;
-		relationships[rightChoice*objectCount + leftChoice] = 8;
+		relationships[leftChoice][rightChoice] = -8;
+		relationships[rightChoice][leftChoice] = 8;
 		break;
 	default:
 		break;
@@ -217,7 +217,7 @@ void QSetRelationDialog::rightItemCliked(QModelIndex index)
 		delete smallButtonImage;
 	}
 
-	smallButtonImage = IplImage2QImage(objects[leftChoice]->grayimg.GetImage());
+	smallButtonImage = IplImage2QImage(objects[rightChoice]->grayimg.GetImage());
 	QImage temp = smallButtonImage->scaled(SMALLIMAGESIZE,SMALLIMAGESIZE);
 	buttonImageLabel->setPixmap(QPixmap::fromImage(temp));
 	buttonImageLabel->show();

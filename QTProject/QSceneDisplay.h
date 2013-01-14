@@ -1,3 +1,7 @@
+/************************************************************************/
+/* 修改1. 将int state; 改成enum类型 enum SceneDisplayState,其实这么多的state还是显得很复杂，后面再优化
+*/
+/************************************************************************/
 #ifndef QSCENEDISPLAY_H
 #define QSCENEDISPLAY_H
 
@@ -32,6 +36,7 @@ public:
 	vec up; // 向上的方向
 	float radius;  // 视线所在球的半径
 	GLfloat plane[4];
+
 	/*
 	0: 默认状态，可以对场景进行物体拾取，平移，旋转，缩放
 	1: 平移场景
@@ -40,8 +45,10 @@ public:
 	4: 旋转物体
 	5: 缩放物体
 	*/
-	int state; // 指示当前的状态，是平移还是选择物体
-
+	//int state; // 指示当前的状态，是平移还是选择物体
+	enum SceneDisplayState{PrepareState, SceneTranslation, SceneRotation,
+		ObjectTranslation, ObjectRotation, ObjectZoom};
+	SceneDisplayState sceneDisplayState; //用于指示场景当前的状态
 
 	int selectModel;  // 选中的模型的index
 

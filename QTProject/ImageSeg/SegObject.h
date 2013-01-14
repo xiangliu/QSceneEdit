@@ -9,7 +9,7 @@
 
 #include <QPoint>
 #include <QString>
-#include "CvvImage.h"
+#include "ImageSeg/CvvImage.h"
 #include <string>
 
 class CSegObject

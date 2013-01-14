@@ -1,6 +1,10 @@
 #ifndef QSETRELATIONDIALOG_H
 #define QSETRELATIONDIALOG_H
 
+/************************************************************************/
+/* 用于设置所有object之间的relationship                                                                     */
+/************************************************************************/
+#include <QImage>
 #include <QLabel>
 #include <QDialog>
 #include <QWidget>
@@ -62,7 +66,8 @@ public:
 	//比如第一次得到的tag序列为i, j; relation = k;
 	//那么relationship[i*count+j]=k
 	//每一次relationship的设定都是以QComboBox的改变作为事件驱动
-	int *relationships;
+	//int *relationships;
+	int **relationships; //直接就设置成[i][j] = k;
 
 	//窗口控件对应变量
 	QImage *smallTopImage;

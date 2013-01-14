@@ -47,7 +47,34 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="3DFeatureExtract\Bitmap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\Circularity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\ColorDescriptor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\CompactColor.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\Convert.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="ImageSeg\CvvImage.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\Eccentricity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\Edge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\FeatureExtract.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\FourierDescriptor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="trimesh\GLCamera.cc">
@@ -60,6 +87,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="trimesh\KDtree.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\MORPHOLOGY.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Material.cpp">
@@ -92,10 +122,28 @@
     <ClCompile Include="QTagDisplay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="3DFeatureExtract\RWObj.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\RecovAffine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\RegionShape.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\Rotate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ImageSeg\SegObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\TraceContour.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\TranslateScale.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="trimesh\TriMesh_bounding.cc">
@@ -125,6 +173,9 @@
     <ClCompile Include="trimesh\TriMesh_tstrips.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\config.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="trimesh\conn_comps.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -134,10 +185,382 @@
     <ClCompile Include="trimesh\edgeflip.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\executor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="trimesh\faceflip.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_10.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_128.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_13.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_14.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_15.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_6.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fcr_9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fftwf77.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fftwnd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_10.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_6.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhb_9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_10.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_6.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fhf_9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="trimesh\filter.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_10.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_13.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_14.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_15.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_6.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fn_9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_10.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_13.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_14.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_15.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_6.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\fni_9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_10.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_128.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_13.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_14.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_15.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_6.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\frc_9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_10.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_6.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftw_9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_10.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_16.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_3.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_4.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_6.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_7.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_8.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\ftwi_9.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\generic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="trimesh\lmsmooth.cc">
@@ -149,7 +572,25 @@
     <ClCompile Include="mainwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\malloc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mersenne-twister.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="trimesh\overlap.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\planner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\putils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\rader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\rconfig.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="trimesh\remove.cc">
@@ -158,10 +599,46 @@
     <ClCompile Include="trimesh\reorder_verts.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\rexec.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\rexec2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\rfftwf77.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\rfftwnd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\rgeneric.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\rplanner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DSearch\search.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="trimesh\shared.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="trimesh\subdiv.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\thin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\twiddle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\wisdom.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="3DFeatureExtract\fftw\wisdomio.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -172,13 +649,37 @@
     <ClInclude Include="BaseStruct.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="3DFeatureExtract\Bitmap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="trimesh\Box.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\Circularity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="trimesh\Color.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="3DFeatureExtract\ColorDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="ImageSeg\CvvImage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\Ds.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\Eccentricity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\Edge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\FeatureExtract.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\FourierDescriptor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="trimesh\GLCamera.h">
@@ -191,6 +692,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="trimesh\KDtree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\MORPHOLOGY.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Material.h">
@@ -223,10 +727,28 @@
     <CustomBuild Include="QTagDisplay.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
+    <ClInclude Include="3DFeatureExtract\RWObj.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\RecovAffine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\RegionShape.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\Rotate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <CustomBuild Include="Scene.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
     <ClInclude Include="ImageSeg\SegObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\TraceContour.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\TranslateScale.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="trimesh\TriMesh.h">
@@ -244,6 +766,24 @@
     <ClInclude Include="trimesh\bsphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="3DFeatureExtract\fftw\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\convert.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DSearch\ds.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\fftw\f77_func.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\fftw\fftw-int.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\fftw\fftw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="trimesh\lineqn.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -253,10 +793,22 @@
     <ClInclude Include="trimesh\mempool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mersenne-twister.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="trimesh\noise3d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="3DFeatureExtract\fftw\rfftw.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DSearch\search.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="trimesh\strutil.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="3DFeatureExtract\thin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="trimesh\timestamp.h">

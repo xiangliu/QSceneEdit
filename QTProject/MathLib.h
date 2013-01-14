@@ -8,6 +8,7 @@
 #include "math.h"
 #include <map>
 #include <vector>
+#include <string>
 #include "Global.h"
 using namespace std;
 
@@ -137,6 +138,18 @@ typedef struct TwoDScene
 	char tag1[MAXSEGMENTNUMBER][30];//用来保存模型对应的标签，即模型的类型，例如桌子椅子等 
 	char pictureFilename[200]; //用于保存照片的文件名
 }TwoDScene;
+
+
+//用于辅助场景检索的数据结构
+typedef struct ThreeDSceneSearchHelp
+{
+	string modelTag;  //用于表示模型的tag
+	int modelIndex;	  //用于表示模型在描述子数组中的序号
+	vector<int> sameTagIndex; //用于表示自己场景中和自身有相同tag的物体的序号
+	vector<int> relationships;  //用于表示该物体所拥有的relationship
+	vector<string> relationshipTag;  //用于表示该物体所用于的relationship的另一端所包含物体的tag
+}ThreeDSceneSearchHelp;
+
 
 //这里的设置和search里有重叠，所以暂时不再使用
 //用于读取三维场景分割结果

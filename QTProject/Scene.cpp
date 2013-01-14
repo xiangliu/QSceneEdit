@@ -6,14 +6,16 @@
 
 Scene::Scene(QObject* parent) :QObject(parent)
 {
-	Vsize=Vnsize=Vtsize=MtlSize=TextureNum=modelSize=0;
-	points=NULL;
-	vnormals=NULL;
+#ifdef DefMaterial
+	Vtsize=MtlSize=TextureNum=0;
 	vtextures=NULL;
 	materials=NULL;
+#endif
+	Vsize=Vnsize=modelSize=0;
+	points=NULL;
+	vnormals=NULL;
 	relationTable=NULL;
 }
-
 
 Scene::~Scene(void)
 {
@@ -27,13 +29,16 @@ Scene::~Scene(void)
 	if(points!=NULL)
 		delete points;
 
+#ifdef DefMaterial
 	if(vtextures!=NULL)
 		delete vtextures;
 
 	if (materials!=NULL)
 		delete[] materials;
+#endif
 
-	for (int i=0;i<modelSize;i++)
+
+	for (int i=0;i<sceneModels.size();i++)
 		delete sceneModels[i];
 
 	for (int i=0; i<faces.size();i++)
@@ -72,21 +77,24 @@ bool Scene::readHelper(const char* filename)
 	{
 		getline(input,buffer);
 
-		if (buffer.substr(0,2)=="vn")
+		if (buffer.substr(0,3)=="vn ")
 			Vnsize++;
-		else if(buffer.substr(0,2)=="vt")
-			Vtsize++;
-		else if(buffer.substr(0,1)=="v")
+		else if(buffer.substr(0,2)=="v ")
 			Vsize++;
-		else if(buffer.substr(0,6)=="usemtl")
+#ifdef DefMaterial
+		else if(buffer.substr(0,3)=="vt ")
+			Vtsize++;
+		else if(buffer.substr(0,7)=="usemtl ")
 			TextureNum++;
+#endif
 	}
 
 	input.close();
 	points=new point[Vsize];
 	vnormals=new vnormal[Vnsize];
+#ifdef DefMaterial
 	vtextures=new vtexture[Vtsize];
-
+#endif
 	return read_obj(filename);
 }
 
@@ -101,12 +109,15 @@ bool Scene::read_obj(const char* filename)
 
 	string buffer;
 	string objName;
-	int countV=0,countN=0,countT=0;
+	int countV=0,countN=0;
 	// 用于拆分多个顶点构成的face
 	vector<int> thisv;
 	vector<int> thisvn;
-	vector<int> thisvt;
 
+#ifdef DefMaterial
+	vector<int> thisvt;
+	int countT=0;
+#endif
 	// 解析 group标签
 	string curModelName;  // 当前模型的名称Name
 
@@ -117,27 +128,45 @@ bool Scene::read_obj(const char* filename)
 		string temp;
 		string f1,f2,f3;
 
-		if(buffer.substr(0,2) == "vn")  {
+		if(buffer.substr(0,3) == "vn ")  {
 			line>> temp>> f1>> f2>> f3;
 			vnormals[countN][0] = atof(f1.c_str());
 			vnormals[countN][1] = atof(f2.c_str());
 			vnormals[countN][2] = atof(f3.c_str());
 			++countN;
 		}
-		else if(buffer.substr(0,2) == "vt")  {
-			line >> temp >> f1 >> f2;
-			vtextures[countT][0] = atof(f1.c_str());
-			vtextures[countT][1] = atof(f2.c_str());
-			++countT;
-		}				
-		else if(buffer.substr(0,1) == "v")  {
+		else if(buffer.substr(0,2) == "v ")  {
 			line>> temp>> f1>> f2>> f3;
 			points[countV][0] = atof(f1.c_str());
 			points[countV][1] = atof(f2.c_str());
 			points[countV][2] = atof(f3.c_str());
 			++countV;
 		}
-		else if (buffer.substr(0,1)=="f")
+#ifndef DefMaterial
+		else if (buffer.substr(0,2)=="f ")
+		{
+			thisv.clear();
+			thisvn.clear();
+
+			const char *c=buffer.c_str();
+			while (1) {
+				while (*c && *c != '\n' && !isspace(*c))
+					c++;
+				while (*c && isspace(*c))
+					c++;
+				int v,vn,vt;
+				if (sscanf(c, "%d/%d/%d", &v,&vt,&vn) != 3)
+					break;
+				v--;
+				vn--;
+				thisv.push_back(v);
+				thisvn.push_back(vn);
+			}
+			tess(thisv,thisvn);
+		}
+#endif
+#ifdef DefMaterial
+		else if (buffer.substr(0,2)=="f ")
 		{
 			thisv.clear();
 			thisvn.clear();
@@ -161,8 +190,13 @@ bool Scene::read_obj(const char* filename)
 			}
 			tess(thisv,thisvt,thisvn);
 		}
-#ifdef DefMaterial
-		else if (buffer.substr(0,6)=="usemtl")
+		else if(buffer.substr(0,3) == "vt ")  {
+			line >> temp >> f1 >> f2;
+			vtextures[countT][0] = atof(f1.c_str());
+			vtextures[countT][1] = atof(f2.c_str());
+			++countT;
+		}
+		else if (buffer.substr(0,7)=="usemtl ")
 		{
 			string name; // usemtl name;
 			line>>temp>>name;
@@ -176,14 +210,14 @@ bool Scene::read_obj(const char* filename)
 			}
 			mtlMark.push_back(sc);
 		}
-		else if (buffer.substr(0,6)=="mtllib")
+		else if (buffer.substr(0,7)=="mtllib ")
 		{
 			// temp=mtllib  f1=纹理地址
-			line>>temp>>f1; 
-			LoadMtl(f1);
+			line>>temp>>mtlPath; 
+			LoadMtl(mtlPath);
 		}
 #endif // DefMaterial
-		else if (buffer.substr(0,1)=="g")
+		else if (buffer.substr(0,2)=="g ")
 		{
 			line>>temp>>f1>>f2;  // 清除g Mesh的影响，f2包含物体名称
 			// 处理Model Name
@@ -205,6 +239,11 @@ bool Scene::read_obj(const char* filename)
 			}
 		}
 	}
+
+#ifdef DefMaterial
+	usemtlSlice.push_back(INT_MAX);
+#endif
+
 	input.close();
 	CompleteModelSetting();
 
@@ -217,7 +256,7 @@ bool Scene::read_obj(const char* filename)
 		getline(input,buffer);
 		istringstream line(buffer);
 		string tempG,tempMesh,info;
-		if (buffer.substr(0,1)=="g")
+		if (buffer.substr(0,2)=="g ")
 		{
 			int infoNum=CountSpaceNum(buffer)-2;
 			line>>tempG>>tempMesh>>info;
@@ -357,10 +396,57 @@ bool Scene::read_obj(const char* filename)
 
 void Scene::ExtractBasePath( const char* filename )
 {
-	int pos=scenePath.find_last_of("\\");
+	int pos=scenePath.find_last_of("/");
 	dirPath=scenePath.substr(0,pos+1);
 }
 
+void Scene::tess( const vector<int> &thisv,const vector<int> &thisvn )
+{
+	if(thisv.size()<3)
+		return;
+	if (thisv.size()==3)
+	{
+		Face* face=new Face;
+		// 顶点
+		face->v[0]=thisv[0];
+		face->v[1]=thisv[1];
+		face->v[2]=thisv[2];
+
+		face->vn[0]=thisvn[0];
+		face->vn[1]=thisvn[1];
+		face->vn[2]=thisvn[2];
+
+		faces.push_back(face);
+
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[0],points[face->v[0]]));
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[1],points[face->v[1]]));
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[2],points[face->v[2]]));
+
+		return;
+	}
+	for(int i=2;i<thisv.size();i++)
+	{
+		Face *face=new Face;
+		// 顶点
+		face->v[0]=thisv[0];
+		face->v[1]=thisv[i-1];
+		face->v[2]=thisv[i];
+
+		// 法向
+		face->vn[0]=thisvn[0];
+		face->vn[1]=thisvn[i-1];
+		face->vn[2]=thisvn[i];
+
+		faces.push_back(face);
+
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[0],points[face->v[0]]));
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[1],points[face->v[1]]));
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[2],points[face->v[2]]));
+	}
+}
+
+
+#ifdef DefMaterial
 void Scene::tess( const vector<int> &thisv,const vector<int> &thisvt,const vector<int> &thisvn )
 {
 	if(thisv.size()<3)
@@ -479,6 +565,7 @@ void Scene::LoadMtl( string mtlPath )
 	}
 	mtlin.close();
 }
+#endif
 
 std::string Scene::FindModelTag( string name )
 {
@@ -520,7 +607,7 @@ void Scene::BuildRelationTable()
 	map<string,vector<int>>::iterator it;
 	for (it=RelationMap.begin();it!=RelationMap.end();it++)
 	{
-		if (it->first=="group")
+		if (it->first.substr(0,5)=="group")
 		{
 			int center=it->second[0];
 			for (int i=1;i<it->second.size();i++)
@@ -529,7 +616,7 @@ void Scene::BuildRelationTable()
 				relationTable[it->second[i]][center]=-1;
 			}
 		}
-		else if (it->first=="identical")
+		else if (it->first.substr(0,9)=="identical")
 		{
 			int size=it->second.size();  // size可能较大
 			for (int i=0;i<(size-1);i++)
@@ -541,7 +628,7 @@ void Scene::BuildRelationTable()
 				}
 			}
 		}
-		else if (it->first=="support")
+		else if (it->first.substr(0,7)=="support")
 		{
 			int size=it->second.size();  // size可能较大
 			int support=it->second[0];
@@ -582,12 +669,12 @@ void Scene::BuildRelationTable()
 				}
 			}
 		}
-		else if (it->first=="vcontact")
+		else if (it->first.substr(0,8)=="vcontact")
 		{
 			relationTable[it->second[0]][it->second[1]]=7;
 			relationTable[it->second[1]][it->second[0]]=7;
 		}
-		else if (it->first=="enclosure")
+		else if (it->first.substr(0,9)=="enclosure")
 		{
 			int enclosure=it->second[0];
 			for (int i=1;i<it->second.size();i++)
@@ -598,6 +685,98 @@ void Scene::BuildRelationTable()
 		}
 	}
 }
+
+//added by liuXiang
+void Scene::BuildRelationTable1(int **relationTable1)
+{
+	if(relationTable1 == NULL)
+	{
+		return;
+	}
+
+	map<string,vector<int>>::iterator it;
+	for (it=RelationMap.begin();it!=RelationMap.end();it++)
+	{
+		if (it->first.substr(0,5)=="group")
+		{
+			int center=it->second[0];
+			for (int i=1;i<it->second.size();i++)
+			{
+				relationTable1[center][it->second[i]]=1;
+				relationTable1[it->second[i]][center]=-1;
+			}
+		}
+		else if (it->first.substr(0,9)=="identical")
+		{
+			int size=it->second.size();  // size可能较大
+			for (int i=0;i<(size-1);i++)
+			{
+				for(int j=i+1;j<size;j++)
+				{
+					relationTable1[it->second[i]][it->second[j]]=6;
+					relationTable1[it->second[j]][it->second[i]]=6;
+				}
+			}
+		}
+		else if (it->first.substr(0,7)=="support")
+		{
+			int size=it->second.size();  // size可能较大
+			int support=it->second[0];
+			if (support>0)
+				for (int i=1;i<size;i++)
+				{
+					relationTable1[support][i]=5;
+					relationTable1[i][support]=-5;
+				}
+				// Wall
+			else if (support==-1)
+			{
+				int wall=ModelMap["Wall"];
+				for (int i=1;i<size;i++)
+				{
+					relationTable1[wall][i]=4;
+					relationTable1[i][wall]=-4;
+				}
+			}
+			// onWall
+			else if (support==-2)
+			{
+				int wall=ModelMap["Wall"];
+				for (int i=1;i<size;i++)
+				{
+					relationTable1[wall][i]=2;
+					relationTable1[i][wall]=-2;
+				}
+			}
+			// hangWall
+			else if (support==-3)
+			{
+				int wall=ModelMap["Wall"];
+				for (int i=1;i<size;i++)
+				{
+					relationTable1[wall][i]=3;
+					relationTable1[i][wall]=-3;
+				}
+			}
+		}
+		else if (it->first.substr(0,8)=="vcontact")
+		{
+			relationTable1[it->second[0]][it->second[1]]=7;
+			relationTable1[it->second[1]][it->second[0]]=7;
+		}
+		else if (it->first.substr(0,9)=="enclosure")
+		{
+			int enclosure=it->second[0];
+			for (int i=1;i<it->second.size();i++)
+			{
+				relationTable1[enclosure][it->second[i]]=8;
+				relationTable1[it->second[i]][enclosure]=-8;
+			}
+		}
+	}
+}
+
+
 
 void Scene::DrawScene()
 {
@@ -699,6 +878,120 @@ void Scene::DrawSimpleScene()
 	}
 	glEnd();
 	glFlush();
+}
+
+void Scene::SaveScene()
+{
+	for (int i=0;i<modelSize;i++)
+	{
+		sceneModels[i]->SaveSceneModel();
+	}
+	SaveRelationFile();
+}
+
+void Scene::SaveRelationFile()
+{
+	string relationPath=dirPath+"Relationship.cng";
+	ofstream out(relationPath);
+	out<<"# Data\n";
+	for (int i=0;i<modelSize;++i)
+	{
+		out<<"D\t"<<sceneModels[i]->name<<"\t"<<sceneModels[i]->tag<<"\n";
+	}
+	out<<"\n";
+	out<<"# RelationShip\n";
+	map<string,vector<int>>::iterator it;
+	for(it=RelationMap.begin();it!=RelationMap.end();++it)
+	{
+		out<<"R\t"<<it->first;
+		for (int j=0;j<it->second.size();++j)
+		{
+			out<<"\t"<<it->second[j];
+		}
+		out<<"\n";
+	}
+	out.close();
+}
+
+void Scene::ReadRelationFile( string path )
+{
+	ifstream in(path);
+	string buffer;
+	string name,data1,data2;
+
+	while(!in.eof())
+	{
+		getline(in,buffer);
+		istringstream line(buffer);
+		if (buffer.substr(0,2)=="D\t")
+		{
+			line>>name>>data1>>data2;
+			Model *model=new Model;
+			model->name=data1;
+			model->tag=data2;
+			sceneModels.push_back(model);
+		}
+		else if (buffer.substr(0,2)=="R\t")
+		{
+			stringstream ss(buffer);     
+			string item; 
+			string relation_tag; 
+			getline(ss, item, '\t'); // R
+			getline(ss, relation_tag, '\t'); // relation_tag
+			
+			vector<int> Vships;
+			while(getline(ss, item, '\t')) 
+			{    
+				int temp = atoi(item.c_str());
+				Vships.push_back(temp);
+			} 
+			RelationMap.insert(pair<string,vector<int>>(relation_tag,Vships));
+		}
+	}
+	in.close();
+	
+	this->modelSize = sceneModels.size(); //added by liuxiang
+}
+
+//added by liuxiang, for 3D Scene Search
+void Scene::LightReadRelationFile( string path )
+{
+	ifstream in(path);
+	string buffer;
+	string name,data1,data2;
+	LightModel tempModel;
+
+	while(!in.eof())
+	{
+		getline(in,buffer);
+		istringstream line(buffer);
+		if (buffer.substr(0,2)=="D\t")
+		{
+			line>>name>>data1>>data2;
+			tempModel.modelName = data1;
+			tempModel.modelTag = data2;
+			lightSceneModels.push_back(tempModel);
+		}
+		else if (buffer.substr(0,2)=="R\t")
+		{
+			stringstream ss(buffer);     
+			string item; 
+			string relation_tag; 
+			getline(ss, item, '\t'); // R
+			getline(ss, relation_tag, '\t'); // relation_tag
+
+			vector<int> Vships;
+			while(getline(ss, item, '\t')) 
+			{    
+				int temp = atoi(item.c_str());
+				Vships.push_back(temp);
+			} 
+			RelationMap.insert(pair<string,vector<int>>(relation_tag,Vships));
+		}
+	}
+	in.close();
+
+	this->modelSize = lightSceneModels.size(); //added by liuxiang
 }
 
 

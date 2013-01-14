@@ -65,7 +65,8 @@ public:
 	CvvImage obj;     //原始图片中被选中的某个物体
 	CvvImage grayimg; // pickup物体生成对应的灰度图
 	vector<CSegObject*> objects; // 分割出的物体
-
+	vector<int> objectImportance;  //分割出物体的重要程度,就不去修改CSegObject的结构了，另外定义
+	
 	//交互相关变量
 	QPoint buttonDown; // 鼠标按下时，屏幕点的位置
 	//bool ClearPickupObject;  //当新的点击产生时，是否清楚原来现实的object

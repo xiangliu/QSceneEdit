@@ -439,6 +439,7 @@ void QPictureDisplay::SaveSegObject(QString tag, int weight)
 	//object->tag= tag.toStdString() ;
 	object->tag = tag;
 	objects.push_back(object);
+	objectImportance.push_back(weight); //保存物体的重要程度
 	//this->ObjectPos++;
 
 	//为下次pickup做准备，清空此次选择内容

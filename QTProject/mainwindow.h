@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QStackedWidget>
 #include <QMainWindow>
 #include <QHBoxLayout>
 #include <QTreeWidget>
@@ -25,6 +26,7 @@
 #include "QTagDisplay.h"
 #include "MathLib.h"
 #include "QSetRelationDialog.h"
+#include "QSearchListDisplay.h"
 
 namespace Ui {
 class MainWindow;
@@ -50,20 +52,23 @@ public:
 	//5--水平被支持， 6--被包围
 
 
-	// 界面相关
-    QSceneDisplay *sceneDisplayWidget;
-	QPictureDisplay *pictureDisplayWidget;
-	QSegPictureDisplay *segPictureDisplayWidget;
-	QSetRelationDialog *setRelationDialog;
+	// 整个工程界面相关
+	//QStackedWidget *stackedWidget;
+    QSceneDisplay *sceneDisplayWidget;     //3D场景显示widget
+	//QWidget *picturePartWidget;            //与2D照片相关的场景
+	QSearchListDisplay *searchListDisplayWidget;  //用于显示3D检索结果列表的widget
 
+	QPictureDisplay *pictureDisplayWidget; //2D场景显示widget
+	QSegPictureDisplay *segPictureDisplayWidget; //分割的2D物体显示widget
+	QSetRelationDialog *setRelationDialog;       //设置照片物体relationship的dialog
 	//QTagDisplay *tagDisplayWidget;
-
-	//用来对整个屏幕区域进行布局的
+	
+	//照片分割：用来对整个屏幕区域进行布局的
 	QGridLayout *mainLayout;
 	QSplitter *mainSplitter;
 	QSplitter *rightSplitter;
 
-	//用于mainwindow右边布局使用的控件
+	//照片分割：用于mainwindow右边布局使用的控件
 	QLineEdit *tagEdit ; // 用于输入照片分割后的object tag
 	QLabel *tagLabel ;   // 用于输入照片分割后的object tag
 	QSpinBox *weightSpinBox; //用于输入物体的权重
@@ -83,6 +88,9 @@ public:
 	QTreeWidget* treeWidget;
 	QList<QTreeWidgetItem *> rootList;
 
+	QGridLayout *threeDSceneLayout;
+
+
 	// 菜单栏
 	QMenu *fileMenu;
 	QMenu *imageEditMenu;
@@ -97,7 +105,6 @@ public:
 	QToolBar *editModelToolBar;  //用于编辑3D场景中单个模型
 	QToolBar *editSceneToolBar;  //用于编辑整个3D场景
 	
-
 	// 相关操作
 	QAction *openSceneAction;
 	QAction *saveSceneAction;
@@ -122,20 +129,27 @@ public:
 	QAction *searchSceneAction;
 	QAction *view3DSceneAction;
 
+	//更场景现实相关的layout
+	QGridLayout* sceneListLayout;
+
 	//represent the file to be paint
+	int selcted3DScene; //用于记录用户在3D scene List中的选择
     Scene *scene;
     QImage *SourceImage;  //represent the loaded image file
 
 	//定义二维的场景相关变量
-	TwoDScene  twdScene;  //定义二维场景的数据
-	int twdObjectCount;   //定义二维场景的object 个数
-	CSegObject** objectList; //保存所有被分割object后保存的地址
-	int *relationship;    //开辟一个一维数组来保存所有的二维object之间的relationship
-    // 自定义方法
+	TwoDScene  twdScene;          //定义二维场景的数据
+	int twdObjectCount;           //定义二维场景的object 个数
+	CSegObject** objectList;      //保存所有被分割object后保存的地址
+	int **relationship;            //开辟一个一维数组来保存所有的二维object之间的relationship
+    pSceneMatRes pSceneMatResult; //用来保存场景检索结果的指针
+	
+	// 自定义方法
 public:
 
 
 signals:
+	void SetChooseMode();
 	void SetDisScene(Scene* scene); // 将读入的场景指针传入显示界面
 	void OpenImageFile(QImage *SourceImage); //Open image file
 	void PickImageObject(int state); //pick object from the segmented image
@@ -147,8 +161,9 @@ public slots:
     void SaveSceneFile();
     void MOpenImageFile();  //********added by liu xiang; for open picture*********
 	void ClickImageSaveButton();  //用于应对在保存单幅照片的tag和weight
-	//void PrepareRelations();      //用于在进入relationship的set之前开辟数据
 	void SetRelations();     //根据菜单和图标trigger事件来生成relationship的dialog
+	void Search3DScenes();   //用来响应菜单和图标的检索功能
+
 private:
     Ui::MainWindow *ui;
 	void CreateDockWidget();
@@ -158,6 +173,9 @@ private:
 	void CreateToolbar();
 	void CreateCentralWidget();
 	void CreateConnections(); //用来将mainwindow和各个widget建立connections
+	void mouseDoubleClickEvent ( QMouseEvent *event); //用于捕获在3DsearchList里的双击事件
+
+	bool OpenSceneOfSearch(const char *threeDSceneFilePath); //用于去打开检索得到的3D场景
 };
 
 #endif // MAINWINDOW_H
