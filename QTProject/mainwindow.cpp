@@ -35,8 +35,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	CreateMenu();
 	CreateToolbar();
 	CreateConnections();
-
-
 }
 
 MainWindow::~MainWindow()
@@ -45,7 +43,6 @@ MainWindow::~MainWindow()
 		delete SourceImage;
 
 	//sceneDisplayWidget->destroy();
-
     delete ui;
 }
 
@@ -104,6 +101,8 @@ bool MainWindow::OpenSceneOfSearch(const char *threeDSceneFilePath)
 	}
 
 	//CreateRelationItem();
+
+	// 发送显示3D场景的signal
 	emit SetDisScene(scene);
 }
 
@@ -123,8 +122,9 @@ void MainWindow::MOpenImageFile()
         QMessageBox::warning(this,tr("Load Picture"),tr("Load picture Error"),QMessageBox::Yes);
 		return ;
 	}
+
+	//发送显示被分割图片的消息
 	emit OpenImageFile(SourceImage);
-    //emit SetDisScene(scene);
 }
 
 ////准备好存储所有分割object的内存
@@ -136,6 +136,7 @@ void MainWindow::MOpenImageFile()
 //		objectList = new CSegObject*[twdObjectCount];
 //	}
 //}
+
 
 //直接为image分割后的所有object设定relationship
 void MainWindow::SetRelations()
@@ -153,15 +154,7 @@ void MainWindow::SetRelations()
 			setRelationDialog->objects[i] = pictureDisplayWidget->objects[i];
 		}
 		
-		//生成保存所有relationship的内存地址
-		//setRelationDialog->relationships = new int[temp1*temp1];
-		//for(int i =0; i< temp1; i++)
-		//{
-		//	for(int j = 0; j < temp1; j++)
-		//	{
-		//		setRelationDialog->relationships[i+temp1 + j] = 0;
-		//	}
-		//}
+		//生成保存所有relationship的内存地址	
 		setRelationDialog->relationships = new int*[temp1];
 		for(int i = 0 ;i < temp1; i++)
 		{
@@ -275,7 +268,8 @@ void MainWindow::CreateRelationItem()
 
 void MainWindow::CreateActions()
 {
-   // openSceneAction=new QAction(QIcon(":/image/open.png"),tr("打开场景"),this);
+
+    // openSceneAction=new QAction(QIcon(":/image/open.png"),tr("打开场景"),this);
     //connect(openSceneAction,SIGNAL(triggered()),this,SLOT(OpenSceneFile()));
 
     //***********added by liuxiang,for opening picture *************
@@ -416,6 +410,10 @@ void MainWindow::CreateCentralWidget()
 {
 	// 界面设定&&部件初始化
 	//stackedWidget = new QStackedWidget(this);
+	/*
+	widgetStack = new QStackedWidget;
+	mainSplitter = new QSplitter(Qt::Horizontal);
+	rightSplitter = new QSplitter(Qt::Vertical);
 
    // picturePartWidget = new QWidget;
 	//sceneDisplayWidget=new QSceneDisplay(ui->centralWidget);
@@ -447,20 +445,25 @@ void MainWindow::CreateCentralWidget()
 	tagWidget = new QWidget;
 	tagWidget->setLayout(tagLayout);
 
-	rightSplitter = new QSplitter(Qt::Vertical);
+	//rightSplitter = new QSplitter(Qt::Vertical);
 	rightSplitter->addWidget(tagWidget);
 	rightSplitter->addWidget(segPictureDisplayWidget);
 	//rightSplitter->addWidget(relationDisplayWidget);
 	//rightSplitter->setStretchFactor(0,2);
 
-	mainSplitter = new QSplitter(Qt::Horizontal);
+	//mainSplitter = new QSplitter(Qt::Horizontal);
 	mainSplitter->addWidget(pictureDisplayWidget);
 	mainSplitter->addWidget(rightSplitter);
 	mainSplitter->setStretchFactor(0,2);
 	mainSplitter->setStyleSheet("QSplitter::handle { background-color: gray }"); 
 	mainSplitter->setHandleWidth(3);  
+
+	//widgetStack = new QStackedWidget;
+	widgetStack->addWidget(mainSplitter);
+	widgetStack->setCurrentIndex(0);
 	mainLayout = new QGridLayout;
-	mainLayout->addWidget(mainSplitter,0,0);
+	mainLayout->addWidget(widgetStack,0,0);
+
 
 	ui->centralWidget->setLayout(mainLayout);
 
@@ -469,6 +472,67 @@ void MainWindow::CreateCentralWidget()
 
 	// 界面主层次结构
 	//ui->centralWidget->setLayout(gridLayout);
+	*/
+
+	//2013.3.4 重新改写界面结构
+	entireProjectLayout = new QGridLayout; //直接由ui的centralWidget控制的
+	centralStackedWidget = new QStackedWidget(ui->centralWidget);
+	imageSegmentationWidget = new QWidget;
+	searchListDisplayWidget = new QSearchListDisplay;
+	sceneDisplayWidget = new QSceneDisplay;
+
+	centralStackedWidget->addWidget(imageSegmentationWidget);
+	centralStackedWidget->addWidget(searchListDisplayWidget);
+	centralStackedWidget->addWidget(sceneDisplayWidget);
+	
+	entireProjectLayout->addWidget(centralStackedWidget);
+	ui->centralWidget->setLayout(entireProjectLayout);
+
+	imageMainLayout = new QGridLayout;
+	imageMainSplitter = new QSplitter(Qt::Horizontal);
+	imageRightSplitter = new QSplitter(Qt::Vertical);
+	pictureDisplayWidget = new QPictureDisplay;
+	segPictureDisplayWidget = new QSegPictureDisplay;
+
+	//********************* 全部是第一个页面（照片分割、提取、保存）的布局相关*****************************
+	tagLayout = new QHBoxLayout;
+	tagLabel = new QLabel(tr("Tag of Object:"));
+	tagEdit = new QLineEdit;
+	tagEdit->setMaxLength(10);
+	weightSpinBox = new QSpinBox;
+	weightSpinBox->setMaximum(10);
+	weightSpinBox->setMinimum(1);
+	weightSpinBox->setValue(5);
+	weightLabel = new QLabel(tr("Object weight:"));
+	saveButton = new QPushButton(tr("Save"));
+	connect(saveButton,SIGNAL(clicked()),this,SLOT(ClickImageSaveButton()));
+
+	tagLayout->addWidget(tagLabel);
+	tagLayout->addWidget(tagEdit);
+	tagLayout->addWidget(weightLabel);
+	tagLayout->addWidget(weightSpinBox);
+	tagLayout->addWidget(saveButton);
+	tagWidget = new QWidget;
+	tagWidget->setLayout(tagLayout);
+
+	//rightSplitter = new QSplitter(Qt::Vertical);
+	imageRightSplitter->addWidget(tagWidget);
+	imageRightSplitter->addWidget(segPictureDisplayWidget);
+	//rightSplitter->addWidget(relationDisplayWidget);
+	//rightSplitter->setStretchFactor(0,2);
+
+	//mainSplitter = new QSplitter(Qt::Horizontal);
+	imageMainSplitter->addWidget(pictureDisplayWidget);
+	imageMainSplitter->addWidget(imageRightSplitter);
+	imageMainSplitter->setStretchFactor(0,2);
+	imageMainSplitter->setStyleSheet("QSplitter::handle { background-color: gray }"); 
+	imageMainSplitter->setHandleWidth(3);  
+
+	imageMainLayout->addWidget(imageMainSplitter);
+	imageSegmentationWidget->setLayout(imageMainLayout);
+
+	centralStackedWidget->setCurrentIndex(0);
+
 }
 
 void MainWindow::Search3DScenes()
@@ -517,17 +581,17 @@ void MainWindow::Search3DScenes()
 		}
 
 		//检索
-		//if(!Find3DSceneFromBuffer(twdScene,err,pSceneMatResult))
+		////if(!Find3DSceneFromBuffer(twdScene,err,pSceneMatResult))
 		int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);
 		if(!resultSum)
 		{
 			//MessageBox("Scene search failed：%s",err);
-			QMessageBox::warning(this,tr("Scenes Search"),tr("Search failed!"),QMessageBox::Yes);
-			return;
+			/*QMessageBox::warning(this,tr("Scenes Search"),tr("Search failed!"),QMessageBox::Yes);
+			return;*/
 		}
 		else
 		{
-			QMessageBox::information(this,tr("Scenes Search"),tr("Search finished!"),QMessageBox::Yes);
+			//QMessageBox::information(this,tr("Scenes Search"),tr("Search finished!"),QMessageBox::Yes);
 		}
 
 		//进行整体处理状态的改变
@@ -544,7 +608,8 @@ void MainWindow::Search3DScenes()
 		string temp;
 		string temp1;
 		int index;
-		for(int i = 0; i< resultSum ; i++)
+		//for(int i = 0; i< resultSum ; i++)
+		for(int i = 0; i< 13 ; i++)
 		{
 			fgets(pSceneMatResult[i].name, 200, fpt);
 			temp.assign(pSceneMatResult[i].name);
@@ -558,26 +623,14 @@ void MainWindow::Search3DScenes()
 		fclose(fpt);
 
 		//然后要进行页面的跳转，调到3DSceneList页面去
-		mainLayout->removeWidget(mainSplitter);
-		mainSplitter->hide();
-		searchListDisplayWidget = new QSearchListDisplay(ui->centralWidget);
+	
 		searchListDisplayWidget->resize(ui->centralWidget->width(),ui->centralWidget->height());
-		//searchListDisplayWidget = new QSearchListDisplay;
 		//传递检索数据
 		searchListDisplayWidget->pSceneMatResult = this->pSceneMatResult;
 		//让searchListDisplayWidget去load image
 		searchListDisplayWidget->downlaodSceneImage(ui->centralWidget->width(),ui->centralWidget->height());
-
-		//1.首先移除原有的widget 
-		//mainLayout->removeWidget(mainSplitter);
-		//mainSplitter->hide();
-		//2.加入新的widget
-		sceneListLayout = new QGridLayout;
-		sceneListLayout->addWidget(searchListDisplayWidget);
-		ui->centralWidget->setLayout(sceneListLayout);
-		//ui->centralWidget->show();
-		searchListDisplayWidget->showMaximized();
-		//searchListDisplayWidget->show();
+		int tt = centralStackedWidget->indexOf(searchListDisplayWidget);
+		centralStackedWidget->setCurrentIndex(tt);
 	}
 }
 
@@ -598,9 +651,7 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		//阶段跳转
 		this->entireState = threeDProcess;
 
-
-		//*********准备3D场景显示相关的工作**************
-		sceneDisplayWidget=new QSceneDisplay(ui->centralWidget);
+	    //*********准备3D场景显示相关的工作**************
 
 		//create action
 		saveSceneAction=new QAction(QIcon(":/image/save.png"),tr("保存场景"),this);
@@ -659,19 +710,11 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		//	return;
 		//}
 		OpenSceneOfSearch( temp1.c_str());
-		/*this->OpenSceneFile();*/
 
 		//准备显示场景的widget
-		sceneListLayout->removeWidget(searchListDisplayWidget);
-		searchListDisplayWidget->hide();
-
 		sceneDisplayWidget->resize(ui->centralWidget->width(),ui->centralWidget->height());
+		centralStackedWidget->setCurrentIndex(2);
 
-		threeDSceneLayout = new QGridLayout(ui->centralWidget);
-		threeDSceneLayout->addWidget(sceneDisplayWidget);
-		ui->centralWidget->setLayout(threeDSceneLayout);
-		sceneDisplayWidget->showMaximized();
-		
 	}	
 }
 

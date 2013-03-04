@@ -53,20 +53,31 @@ public:
 
 
 	// 整个工程界面相关
-	//QStackedWidget *stackedWidget;
-    QSceneDisplay *sceneDisplayWidget;     //3D场景显示widget
-	//QWidget *picturePartWidget;            //与2D照片相关的场景
-	QSearchListDisplay *searchListDisplayWidget;  //用于显示3D检索结果列表的widget
+	
+	//整个场景的顶层界面
+	QGridLayout* entireProjectLayout; //直接由ui的centralWidget控制的
+	QWidget* imageSegmentationWidget;
+	QSearchListDisplay *searchListDisplayWidget;
+	QSceneDisplay* sceneDisplayWidget; 
+	QStackedWidget* centralStackedWidget;
 
+	//更3D场景list相关的layout
+	QGridLayout* sceneListLayout;
+
+	//与3D场景显示相关变量
+	//QSearchListDisplay *searchListDisplayWidget;  //用于显示3D检索结果列表的widget
+	QGridLayout *threeDSceneListLayout;    //用于显示3D检索结果列表的layout
+
+	//2D场景现实相关变量
 	QPictureDisplay *pictureDisplayWidget; //2D场景显示widget
 	QSegPictureDisplay *segPictureDisplayWidget; //分割的2D物体显示widget
 	QSetRelationDialog *setRelationDialog;       //设置照片物体relationship的dialog
-	//QTagDisplay *tagDisplayWidget;
 	
 	//照片分割：用来对整个屏幕区域进行布局的
-	QGridLayout *mainLayout;
-	QSplitter *mainSplitter;
-	QSplitter *rightSplitter;
+	//QGridLayout *mainLayout;
+	QGridLayout *imageMainLayout;
+	QSplitter *imageMainSplitter;
+	QSplitter *imageRightSplitter;
 
 	//照片分割：用于mainwindow右边布局使用的控件
 	QLineEdit *tagEdit ; // 用于输入照片分割后的object tag
@@ -128,9 +139,6 @@ public:
 	QAction *createRelationAction;
 	QAction *searchSceneAction;
 	QAction *view3DSceneAction;
-
-	//更场景现实相关的layout
-	QGridLayout* sceneListLayout;
 
 	//represent the file to be paint
 	int selcted3DScene; //用于记录用户在3D scene List中的选择

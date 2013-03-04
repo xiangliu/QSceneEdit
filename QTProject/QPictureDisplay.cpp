@@ -35,6 +35,7 @@ QPictureDisplay::~QPictureDisplay()
 	//}
 
 	 delete []Iselected;
+	 Iselected = NULL;
 	
 	//segmented image
 	if(hState == segmented)
@@ -42,16 +43,17 @@ QPictureDisplay::~QPictureDisplay()
 		for (int i=0;i<ImageHeight;i++)
 		{
 			delete[] labels[i];
+			labels[i]= NULL;
 		}
 		delete[] labels;
-		
+		labels = NULL;
 	}
 
 	//release the picked object
 	if(hState == objcetPicked)
 	{
-		for (int i=0;i<objects.size();i++)
-			delete objects[i];
+		//for (int i=0;i<objects.size();i++)
+		//	delete objects[i];
 	}
 	
 }

@@ -19,22 +19,76 @@ QWidget(parent)
 	imageLable7 = new QLabel;
 	imageLable8 = new QLabel;
 
-	mainLayout = new QGridLayout;
-	mainLayout->addWidget(imageLable1,0,0);
-	mainLayout->addWidget(imageLable2,0,1);
-	mainLayout->addWidget(imageLable3,0,2);
-	mainLayout->addWidget(imageLable4,0,3);
-	mainLayout->addWidget(imageLable5,1,0);
-	mainLayout->addWidget(imageLable6,1,1);
-	mainLayout->addWidget(imageLable7,1,2);
-	mainLayout->addWidget(imageLable8,1,3);
+	sceneListMainLayout = new QGridLayout;
+	sceneListMainLayout->addWidget(imageLable1,0,0);
+	sceneListMainLayout->addWidget(imageLable2,0,1);
+	sceneListMainLayout->addWidget(imageLable3,0,2);
+	sceneListMainLayout->addWidget(imageLable4,0,3);
+	sceneListMainLayout->addWidget(imageLable5,1,0);
+	sceneListMainLayout->addWidget(imageLable6,1,1);
+	sceneListMainLayout->addWidget(imageLable7,1,2);
+	sceneListMainLayout->addWidget(imageLable8,1,3);
 
-	this->setLayout(mainLayout);
+	this->setLayout(sceneListMainLayout);
 	//this->show();
 }
 
 QSearchListDisplay::~QSearchListDisplay()
 {
+	//if( imageLable1 != NULL)
+	//{
+	//	delete imageLable1;
+	//	imageLable1 = NULL;
+	//}
+
+	//if( imageLable2 != NULL)
+	//{
+	//	delete imageLable2;
+	//	imageLable2 = NULL;
+	//}
+
+	//if( imageLable3 != NULL)
+	//{
+	//	delete imageLable3;
+	//	imageLable3 = NULL;
+	//}
+
+	//if( imageLable4 != NULL)
+	//{
+	//	delete imageLable4;
+	//	imageLable4 = NULL;
+	//}
+
+	//if( imageLable5 != NULL)
+	//{
+	//	delete imageLable5;
+	//	imageLable5 = NULL;
+	//}
+
+	//if( imageLable6 != NULL)
+	//{
+	//	delete imageLable6;
+	//	imageLable6 = NULL;
+	//}
+
+	//if( imageLable7 != NULL)
+	//{
+	//	delete imageLable7;
+	//	imageLable7 = NULL;
+	//}
+
+	//if( imageLable8 != NULL)
+	//{
+	//	delete imageLable8;
+	//	imageLable8 = NULL;
+	//}
+
+	//if( mainLayout != NULL)
+	//{
+	//	delete mainLayout;
+	//	mainLayout = NULL;
+	//}
+	
 }
 
 bool QSearchListDisplay::downlaodSceneImage(int windWidth, int windHeight)

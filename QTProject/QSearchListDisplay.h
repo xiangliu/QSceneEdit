@@ -58,7 +58,7 @@ public:
 	SearchState searchState;
 
 	//整个widget的框架相关变量
-	QGridLayout* mainLayout ; //用于装这些label的layout
+	QGridLayout* sceneListMainLayout ; //用于装这些label的layout
 
 	//3D场景相关的数据变量
 	pSceneMatRes pSceneMatResult;  //用于保存检索结果的数据
