@@ -44,8 +44,8 @@ public:
 public:
 
 	//标示程序所在的状态，包括照片处理（imageHandle）、照片物体关系生成（setRelationship）
-	//检索3D场景（search3DScene）、显示3D场景（display3DScene）
-	enum entireProcessState { imageHandle, setRelationship ,search3DScene , display3DScene,threeDProcess};
+	//检索3D场景（search3DScene）、显示3D场景（display3DScene）、编辑3D场景（edit3DScene）
+	enum entireProcessState { imageHandle, setRelationship ,search3DScene , display3DScene,threeDProcess,edit3DScene};
 	entireProcessState entireState ;
 
 	//定义relationship的种类： 0--默认无关系，1--水平支持（support），2--包围（enclosured），3--竖直接触（vContact），4--group关系
@@ -106,8 +106,8 @@ public:
 	QMenu *fileMenu;
 	QMenu *imageEditMenu;
 	QMenu *searchMenu; //用于输入relationship和进行search的menu
-	QMenu *modelEditMenu;
-	QMenu *sceneEditMenu;
+	QMenu *modelEditMenu; //应该是叫scene edit，因为是网scene中添加模型
+	QMenu *sceneEditMenu;  //暂时没用到
 	
 	// 工具栏
 	QToolBar *fileToolBar;
@@ -140,10 +140,22 @@ public:
 	QAction *searchSceneAction;
 	QAction *view3DSceneAction;
 
+	//action related with edit 3D scene
+	QAction *pickupCubeAction;
+	QAction *searchInseartObjectAction;
+	//这些都可以共用对单个物体进行编辑的菜单
+	//QAction *transformCubeAction;  
+	//QAction *rotateCubeAction;
+	//QAction *scaleCubeAction;
+
 	//represent the file to be paint
 	int selcted3DScene; //用于记录用户在3D scene List中的选择
     Scene *scene;
     QImage *SourceImage;  //represent the loaded image file
+
+	////定义单个模型检索相关的变量
+	//int selected3DModel;   //-1代表什么都没有选
+	//pObjectMatRes pObjectMatchResult;
 
 	//定义二维的场景相关变量
 	TwoDScene  twdScene;          //定义二维场景的数据
@@ -170,8 +182,10 @@ public slots:
     void MOpenImageFile();  //********added by liu xiang; for open picture*********
 	void ClickImageSaveButton();  //用于应对在保存单幅照片的tag和weight
 	void SetRelations();     //根据菜单和图标trigger事件来生成relationship的dialog
-	void Search3DScenes();   //用来响应菜单和图标的检索功能
-
+	void Search3DScenes();   //用来响应菜单和图标的场景检索功能
+	//void searchInseartObject();  //用来响应菜单的单个模型检索功能
+	//void Inseart3DModel(int selectedModel);   //用来响应单个模型检索列表中单击后挑选的结果，同时再次触发QSceneDisplay去insert模型并重绘
+	
 private:
     Ui::MainWindow *ui;
 	void CreateDockWidget();

@@ -14,5 +14,7 @@
         <file>image/relationship.png</file>
         <file>image/display.png</file>
         <file>image/search.png</file>
+        <file>image/contextSearch.png</file>
+        <file>image/SearchInseatObject.png</file>
     </qresource>
 </RCC>

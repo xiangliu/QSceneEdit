@@ -29,6 +29,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	relationship = NULL;
 	this->pSceneMatResult = new SceneMatRes[SCENEFORDISPLAY];
 
+	////用于保存单个模型检索结果
+	//selected3DModel = -1;
+	//this->pObjectMatchResult = new ObjectMatRes[MODELSEARCHRESULTNUMBER];
+
 	CreateCentralWidget();
 	CreateDockWidget();
 	CreateActions();
@@ -43,6 +47,13 @@ MainWindow::~MainWindow()
 		delete SourceImage;
 
 	//sceneDisplayWidget->destroy();
+
+	if(pSceneMatResult != NULL)
+	{
+		delete pSceneMatResult;
+		pSceneMatResult = NULL;
+	}
+
     delete ui;
 }
 
@@ -580,8 +591,7 @@ void MainWindow::Search3DScenes()
 			//}
 		}
 
-		//检索
-		////if(!Find3DSceneFromBuffer(twdScene,err,pSceneMatResult))
+		////检索
 		int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);
 		if(!resultSum)
 		{
@@ -608,8 +618,8 @@ void MainWindow::Search3DScenes()
 		string temp;
 		string temp1;
 		int index;
-		//for(int i = 0; i< resultSum ; i++)
-		for(int i = 0; i< 13 ; i++)
+		for(int i = 0; i< resultSum ; i++)
+		//for(int i = 0; i< 15 ; i++)
 		{
 			fgets(pSceneMatResult[i].name, 200, fpt);
 			temp.assign(pSceneMatResult[i].name);
@@ -623,14 +633,15 @@ void MainWindow::Search3DScenes()
 		fclose(fpt);
 
 		//然后要进行页面的跳转，调到3DSceneList页面去
-	
 		searchListDisplayWidget->resize(ui->centralWidget->width(),ui->centralWidget->height());
+
 		//传递检索数据
 		searchListDisplayWidget->pSceneMatResult = this->pSceneMatResult;
 		//让searchListDisplayWidget去load image
-		searchListDisplayWidget->downlaodSceneImage(ui->centralWidget->width(),ui->centralWidget->height());
+		searchListDisplayWidget->downlaodSceneImage(ui->centralWidget->width(),ui->centralWidget->height());	
 		int tt = centralStackedWidget->indexOf(searchListDisplayWidget);
 		centralStackedWidget->setCurrentIndex(tt);
+        
 	}
 }
 
@@ -651,7 +662,7 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		//阶段跳转
 		this->entireState = threeDProcess;
 
-	    //*********准备3D场景显示相关的工作**************
+	    //*********准备3D场景显示和编辑相关的工作**************
 
 		//create action
 		saveSceneAction=new QAction(QIcon(":/image/save.png"),tr("保存场景"),this);
@@ -672,6 +683,12 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		rotateSceneAction=new QAction(QIcon(":/image/rotate.png"),tr("旋转场景"),this);
 		connect(rotateSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
 
+		pickupCubeAction = new QAction(QIcon(":/image/contextSearch.png"),tr("添加物体检索框"),this);
+		connect(pickupCubeAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(pickupCubeAction()));
+
+		searchInseartObjectAction = new QAction(QIcon(":/image/SearchInseatObject.png"),tr("查找物体"),this);
+		connect(searchInseartObjectAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(searchInseartObject()));
+
 		//add menu
 		fileMenu->addAction(saveSceneAction);  //这个是在文件菜单那一栏，比较特殊一点
 
@@ -688,6 +705,8 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		fileToolBar->addAction(saveSceneAction);
 
 		editModelToolBar=addToolBar(tr("模型编辑"));
+		editModelToolBar->addAction(pickupCubeAction);
+		editModelToolBar->addAction(searchInseartObjectAction);
 		editModelToolBar->addAction(chooseModelAction);
 		editModelToolBar->addAction(transModelAction);
 		editModelToolBar->addAction(rotateModelAction);
@@ -699,7 +718,7 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		//create connection
 		connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));
 		connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
-		
+		connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
 		
 		//1.获取场景,如果失败则用message提示
 		string temp1 = string(this->pSceneMatResult[this->selcted3DScene].name)+".obj";
@@ -717,5 +736,22 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 
 	}	
 }
+
+//该方法被转移到QSceneDisplay中去了
+//用来响应菜单的单个模型检索功能
+//该函数必须根据插入的检索框位置，通过检索算法查找到相应的模型列表，随后将模型列表传递给QModelListDialog，让其显示
+//void MainWindow::searchInseartObject()  
+//{
+//	//if(this->)
+//}
+
+//该函数同样转移到QSceneDisplay中去了
+//本函数响应QModelListDialog发射的信号，download被挑选的物体，随后再插入场景，让场景重绘
+//void MainWindow::Inseart3DModel(int selectedModel)
+//{
+//
+//}
+
+
 
 

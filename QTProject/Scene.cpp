@@ -15,6 +15,9 @@ Scene::Scene(QObject* parent) :QObject(parent)
 	points=NULL;
 	vnormals=NULL;
 	relationTable=NULL;
+
+	////added by liuxiang
+	//sceneDrawState = DrawSceneModel;
 }
 
 Scene::~Scene(void)
@@ -796,6 +799,12 @@ void Scene::need_bbox()
 	for (int i = 0; i < Vsize; i++)
 		bbox += points[i];
 	bbox.valid=true;
+
+	//顺道计算整个场景的中心点，added by liuxiang
+	sceneCenter[0] =  (bbox.min[0] + bbox.max[0]) /2;
+	sceneCenter[1] =  (bbox.min[1] + bbox.max[1]) /2;
+	sceneCenter[2] =  (bbox.min[2] + bbox.max[2]) /2;
+
 	//dprintf("Done.\n  x = %g .. %g, y = %g .. %g, z = %g .. %g\n",
 	//	bbox.min[0], bbox.max[0], bbox.min[1],
 	//	bbox.max[1], bbox.min[2], bbox.max[2]);
@@ -992,6 +1001,36 @@ void Scene::LightReadRelationFile( string path )
 	in.close();
 
 	this->modelSize = lightSceneModels.size(); //added by liuxiang
+}
+
+//往3D场景中画用于单个模型检索的立方体
+//实现思路：先生成一个模型，将计算得到的bbox赋值给该模型，随后对该bbox平移旋转等操作
+void Scene::DrawModelSearchBBox()
+{
+	//先计算要添加的bbox
+	if(!objectSearchBBox.valid)
+	{
+		//先计算整个场景的bbox
+		if(!bbox.valid)
+		{
+			this->need_bbox();
+		}
+
+		//要添加的Box为整个场景的1/8
+		point tempPoint;
+		tempPoint[0] = 8.0;
+		tempPoint[1] = 8.0;
+		tempPoint[2] = 8.0;
+		objectSearchBBox.min = sceneCenter - (bbox.max- bbox.min)/tempPoint;
+		objectSearchBBox.max = sceneCenter + (bbox.max- bbox.min)/tempPoint;
+		objectSearchBBox.valid = true;
+	}
+
+	//生成保存要画的bbox的model，同时将保存的拾取状态的
+	Model *newInsertModel = new Model;
+	newInsertModel->bbox = objectSearchBBox;
+	this->sceneModels.push_back(newInsertModel);//此时scene的modelsize不能增加，因为还没有真正插入model
+
 }
 
 

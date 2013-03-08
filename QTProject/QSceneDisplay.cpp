@@ -19,6 +19,10 @@ QSceneDisplay::QSceneDisplay(QWidget *parent)
 	glProjectionM=new GLdouble[16];
 	glModelM=new GLdouble[16];
 	glViewM=new int[4];
+
+	//用于保存单个模型检索结果
+	selected3DModel = -1;
+	this->pObjectMatchResult = new ObjectMatRes[MODELSEARCHRESULTNUMBER];
 }
 
 QSceneDisplay::~QSceneDisplay()
@@ -168,8 +172,16 @@ void QSceneDisplay::mousePressEvent(QMouseEvent *event)
 	btnDown=event->pos();
 	if (event->button()==Qt::LeftButton)
 	{
+		//表明拾取阶段
 		if (sceneDisplayState==PrepareState)
+		{
 			ProcessSelection(btnDown.x(),btnDown.y());
+		}
+		//表明检索到单个model之后点击加入场景之中
+		else if(this->sceneDisplayState == SearchSingleModel)
+		{
+
+		}
 		//else if (state==3 && isSelectedModelValid())
 		//{
 		//	int invert_y=height()-btnDown.y();
@@ -364,4 +376,68 @@ void QSceneDisplay::SetProjectionModelView()
 	glGetDoublev(GL_PROJECTION_MATRIX,glProjectionM);
 	glGetDoublev(GL_MODELVIEW_MATRIX,glModelM);
 	glGetIntegerv(GL_VIEWPORT,glViewM);
+}
+
+//用于往场景中输入检索框，实现方式跟拾取一样，仅仅将拾取物体的id改成了新插入物体的id
+void QSceneDisplay::pickupCubeAction()
+{
+	//插入检索框的前一状态只需要不是InseartObjectCube
+	if(sceneDisplayState != InseartObjectCube)
+	{
+		//状态转换
+		this->sceneDisplayState = InseartObjectCube;
+		//记录要画的cube
+		this->selectModel = this->scene->modelSize+1;
+
+		//绘制cube和场景
+		this->DrawScene();
+	}
+}
+
+//用来响应菜单的单个模型检索功能
+//该函数必须根据插入的检索框位置，通过检索算法查找到相应的模型列表，随后将模型列表传递给QModelListDialog，让其显示
+void QSceneDisplay::searchInseartObject()  
+{
+	//单击菜单栏的检索必须是在输入完检索框之后
+	if(this->sceneDisplayState == InseartObjectCube)
+	{
+		//状态转换
+	     this->sceneDisplayState = SearchSingleModel;
+
+		 //创建dialog对话框
+		 modelListDialog = new QModelListDialog;
+
+		 //计算检索列表
+		 //searchsingleModel
+
+		 //传递检索数据给modelListDialog，并显示
+		 modelListDialog->pObjectMatchResult =this->pObjectMatchResult;
+		 connect(modelListDialog,SIGNAL(Inseart3DModel(int)),this,SLOT(Inseart3DModel(int)));
+		 int modelListDialogWidth = this->width()*0.75;
+		 int modelListDialogHeight = this->height()*0.75;
+		 modelListDialog->DownloadModelImage(modelListDialogWidth,modelListDialogHeight);
+		 modelListDialog->show();
+
+	}
+}
+
+
+//本函数响应QModelListDialog发射的信号，download被挑选的物体，随后再插入场景，让场景重绘
+void QSceneDisplay::Inseart3DModel(int selectedModel)
+{
+	//首先记录用户的选择
+	this->selected3DModel = selectedModel;
+
+	//其次读取单个模型
+	Model* insertModel = this->scene->sceneModels[this->scene->sceneModels.size()-1];
+	string modelFilepath(this->pObjectMatchResult[selected3DModel].name);
+	insertModel->ReadModel(modelFilepath);
+	//由于原本插入模型的时候scene->modelSize没变，所以这里一定要加1
+	this->scene->modelSize++;
+
+	//将整个系统的状态设定成ObjectRotation,因为还有新插入模型的BBox
+	this->sceneDisplayState = ObjectRotation;
+
+	//重绘整个场景
+	this->DrawScene();
 }

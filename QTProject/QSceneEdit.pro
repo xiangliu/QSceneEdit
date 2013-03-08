@@ -207,6 +207,7 @@ SOURCES += main.cpp\
     QSetRelationDialog.cpp \
     QSearchListDisplay.cpp \
     QTagDisplay.cpp \
+    QModelListDialog.cpp \
     ImageSeg/SegObject.cpp \
     ImageSeg/MeanShift.cpp \
     ImageSeg/CvvImage.cpp
@@ -264,6 +265,7 @@ HEADERS  += mainwindow.h \
     QSegPictureDisplay.h \
     QSetRelationDialog.h \
     QSearchListDisplay.h \
+    QModelListDialog.h \
     QTagDisplay.h \
     ImageSeg/SegObject.h \
     ImageSeg/MeanShift.h \

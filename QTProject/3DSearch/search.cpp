@@ -786,9 +786,9 @@ int search(char* err)
 	//**************end of read feature of all models***************************
 	
 	//如果总共的模型库个数大于5个，那么我们只显示最像的5个
-	if(DataBaseModelNum > SEARCHRESULTNUMBER)
+	if(DataBaseModelNum > MODELSEARCHRESULTNUMBER)
 	{
-		TopNum = SEARCHRESULTNUMBER;
+		TopNum = MODELSEARCHRESULTNUMBER;
 	}
 	else
 	{
@@ -1086,9 +1086,9 @@ int search3DModel(char* err,pObjectMatRes pObjectMatResult)
 	//**************end of read feature of all models***************************
 	
 	//如果总共的模型库个数大于5个，那么我们只显示最像的5个
-	if(DataBaseModelNum > SEARCHRESULTNUMBER)
+	if(DataBaseModelNum > MODELSEARCHRESULTNUMBER)
 	{
-		TopNum = SEARCHRESULTNUMBER;
+		TopNum = MODELSEARCHRESULTNUMBER;
 	}
 	else
 	{
@@ -1180,7 +1180,7 @@ int search3DModel(char* err,pObjectMatRes pObjectMatResult)
 
 
 	//将检索结果保存到doc的变量里头
-	for(int i = 0; i< SEARCHRESULTNUMBER;i++)
+	for(int i = 0; i< MODELSEARCHRESULTNUMBER;i++)
 	{
 		strcpy(pObjectMatResult[i].name,pTop[i].name);
 	}
@@ -2109,14 +2109,14 @@ int Find3DSceneFromBuffer(TwoDScene twds,char* err,pSceneMatRes pSceneMatResult)
 }
 
 //用于检索时vector比较的辅助函数
-bool compareTwoSearchHelp(ThreeDSceneSearchHelp h1, ThreeDSceneSearchHelp h2)
+bool compareTwoSearchHelp(const ThreeDSceneSearchHelp &h1, const ThreeDSceneSearchHelp &h2)
 {
 	return h1.modelTag <  h2.modelTag;
 }
 
 
 //用于场景检索最终检索结果的排序比较函数
-bool compareSearchResult(SceneMatRes s1, SceneMatRes s2)
+bool compareSearchResult(const SceneMatRes &s1, const SceneMatRes &s2)
 {
 	return s1.similarity <  s2.similarity;
 }
@@ -2137,17 +2137,6 @@ int Search3DSceneFromBuffer(TwoDScene twds,int **TwoDRelationship,char* err,pSce
 	char			filename[200],destfn[200];//srcfn用来保存用户输入的模型
 
 	////******************保存照片描述子***********************
-	//unsigned char	src_ArtCoeff2[MAXSEGMENTNUMBER][ART_COEF];     //用来保存一个照片中分割物体所有的描述子
-	//unsigned char	src_FdCoeff_q82[MAXSEGMENTNUMBER][FD_COEF];    //保存照片场景的
-	//unsigned char	src_CirCoeff_q82[MAXSEGMENTNUMBER];            //保存照片场景
-	//unsigned char	src_EccCoeff_q82[MAXSEGMENTNUMBER];            //保存照片场景
-	//
-	////*******************保存3D场景分割结果描述子******************
-	//unsigned char	dest_ArtCoeff2[MAXSEGMENTNUMBER][SRC_ANGLE][CAMNUM][ART_COEF];
-	//unsigned char	dest_FdCoeff_q82[MAXSEGMENTNUMBER][ANGLE][CAMNUM][FD_COEF];
-	//unsigned char	dest_CirCoeff_q82[MAXSEGMENTNUMBER][ANGLE][CAMNUM];
-	//unsigned char	dest_EccCoeff_q82[MAXSEGMENTNUMBER][ANGLE][CAMNUM];
-
 	Scene tempScene;  //用于保存检索时数据库中的3D场景的临时变量
 	vector<ThreeDSceneSearchHelp> twdSceneHelp;  //进行场景的描述子等比较时的辅助变量
 	vector<ThreeDSceneSearchHelp> threedSceneHelp;
@@ -2226,6 +2215,7 @@ int Search3DSceneFromBuffer(TwoDScene twds,int **TwoDRelationship,char* err,pSce
 	{	
 		tt.modelIndex = i;
 		tt.modelTag = string(twds.tag1[i]);
+		tt.sameTageCount = 1;  //用于初始化
 
 		//处理每个物体拥有的relationship以及relationship另外一头的tag
 		for(int j = 0; j<twds.modelNum ; j++)
@@ -2296,6 +2286,7 @@ int Search3DSceneFromBuffer(TwoDScene twds,int **TwoDRelationship,char* err,pSce
 			importance[i] = 1; //暂时不对importance最处理，后面会根据tag进行处理
 			tt.modelIndex = i;
 			tt.modelTag = tempScene.lightSceneModels[i].modelTag;
+			tt.sameTageCount = 1; //用于初始化
 
 			//处理每个物体拥有的relationship以及relationship另外一头的tag
 			for(int j = 0; j<tempScene.modelSize ; j++)
@@ -2324,92 +2315,173 @@ int Search3DSceneFromBuffer(TwoDScene twds,int **TwoDRelationship,char* err,pSce
 			}
 			else if(twdSceneHelp[tempI].modelTag > threedSceneHelp[tempJ].modelTag)
 			{
-				tempJ ++;
+				tempJ++;
 			}
 			else
 			{
 				tempI++;
 			}
 		}
-
-		//记录下与每个2D场景中物体tag相同的3D场景中的物体的index
-		tempI = 0;
-		tempJ = 0;
-		while(tempI< twds.modelNum && tempJ< tempScene.modelSize)
-		{
-			//如果2D场景中当前物体和前一个物体的tag相同，则可以直接复制前一个物体的sameTagIndex
-			if(tempI>0 )
-			{
-				if(twdSceneHelp[tempI].modelTag ==twdSceneHelp[tempI-1].modelTag)
-				{
-					int i = 0;
-					while(i < twdSceneHelp[tempI-1].sameTagIndex.size())
-					{
-						twdSceneHelp[tempI].sameTagIndex.push_back(twdSceneHelp[tempI-1].sameTagIndex[i]);
-						i++;
-					}
-					tempI ++;
-					continue;
-				}
-
-			}
-			//如果当前2D场景中的物体和3D场景中物体tag相同，则讲对方添加到自己的sameTagIndex中，并且在3D场景的物体列表中继续往后搜索
-			if(twdSceneHelp[tempI].modelTag ==threedSceneHelp[tempJ].modelTag )
-			{
-				twdSceneHelp[tempI].sameTagIndex.push_back(threedSceneHelp[tempJ].modelIndex);
-				tempJ++;
-			}
-			else if(twdSceneHelp[tempI].modelTag > threedSceneHelp[tempJ].modelTag)
-			{
-				tempJ ++;
-			}
-			else
-			{
-				tempI++;
-			}
-		}
-
-
-		//记录下与每个3D场景中物体tag相同的2D场景中的物体的index
-		tempI = 0;
-		tempJ = 0;
-		while(tempJ< twds.modelNum && tempI< tempScene.modelSize)
-		{
-			//如果3D场景中当前物体和前一个物体的tag相同，则可以直接复制前一个物体的sameTagIndex
-			if(tempI>0 && threedSceneHelp[tempI].modelTag ==threedSceneHelp[tempI-1].modelTag)
-			{
-				int i = 0;
-				while(i < threedSceneHelp[tempI-1].sameTagIndex.size())
-				{
-					threedSceneHelp[tempI].sameTagIndex.push_back(threedSceneHelp[tempI-1].sameTagIndex[i]);
-					i++;
-				}
-				tempI ++;
-				continue;
-			}
-			//如果当前2D场景中的物体和3D场景中物体tag相同，则讲对方添加到自己的sameTagIndex中，并且在3D场景的物体列表中继续往后搜索
-			if(twdSceneHelp[tempJ].modelTag ==threedSceneHelp[tempI].modelTag )
-			{
-				threedSceneHelp[tempI].sameTagIndex.push_back(twdSceneHelp[tempJ].modelIndex);
-				tempJ++;
-			}
-			else if(threedSceneHelp[tempI].modelTag > twdSceneHelp[tempJ].modelTag)
-			{
-				tempJ ++;
-			}
-			else
-			{
-				tempI++;
-			}
-		}//while
 
 		//计算tag相关度（此处值得商榷，因为目标场景中的物体可能被剔除，所以可能影响不大）
 		temp4 = (float)temp3/(tempScene.modelSize + twds.modelNum);
-		//看看tag相关度是否低于阀值，如果低于，直接进入下一个场景比较，这里讲阀值设置为0.2
-		if(temp4 < 0.01)    
-		{ continue; }
+		//看看tag相关度是否低于阀值，如果低于，直接进入下一个场景比较，这里讲阀值设置为0.2(测试的时候用0.01)
+		if(temp4 < 0.1)    
+		{ 
+			//将循环使用的变量清空，恢复原值
+			//1.清空threedSceneHelp
+			threedSceneHelp.clear();
+			//2.清空tempScene
+			tempScene.lightSceneModels.clear();
+			tempScene.RelationMap.clear();
+			continue;
+		}
 
-		//********如果tag相似度超过阀值，开始读取3D场景被分割物体的描述子
+		//分别计算2D和3D场景中相同tag的模型的个数
+		tempI = 1;
+		while (tempI< twds.modelNum)
+		{
+			if(twdSceneHelp[tempI].modelTag ==twdSceneHelp[tempI-1].modelTag)
+			{
+				//如果与前一个tag相同，则数目增1
+				twdSceneHelp[tempI].sameTageCount = twdSceneHelp[tempI-1].sameTageCount +1;
+			}
+			else
+			{
+				//逆序去给每个模型都赋值相同tag个数
+				int tempCount =  twdSceneHelp[tempI-1].sameTageCount -1; // 
+				int tempIndex = tempI-2;
+				while(tempCount > 0)
+				{
+					twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[tempI-1].sameTageCount;
+					tempCount --;
+					tempIndex--;
+				}
+			}
+
+			if(tempI ==(twds.modelNum -1) && twdSceneHelp[tempI].sameTageCount>1)
+			{
+				//逆序去给每个模型都赋值相同tag个数
+				int tempCount =  twdSceneHelp[tempI].sameTageCount -1; // 
+				int tempIndex = tempI-1;
+				while(tempCount > 0)
+				{
+					twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[tempI].sameTageCount;
+					tempCount --;
+					tempIndex--;
+				}
+			}
+			tempI++;
+		}
+
+		tempI = 1;
+		while (tempI< tempScene.modelSize)
+		{
+			if(threedSceneHelp[tempI].modelTag ==threedSceneHelp[tempI-1].modelTag)
+			{
+				//如果与前一个tag相同，则数目增1
+				threedSceneHelp[tempI].sameTageCount = threedSceneHelp[tempI-1].sameTageCount +1;
+			}
+			else
+			{
+				//逆序去给每个模型都赋值相同tag个数
+				int tempCount =  threedSceneHelp[tempI-1].sameTageCount -1; // 
+				int tempIndex = tempI-2;
+				while(tempCount > 0)
+				{
+					threedSceneHelp[tempIndex].sameTageCount = threedSceneHelp[tempI-1].sameTageCount;
+					tempCount --;
+					tempIndex--;
+				}
+			}
+
+			if(tempI ==(tempScene.modelSize -1) && threedSceneHelp[tempI].sameTageCount>1)
+			{
+				//逆序去给每个模型都赋值相同tag个数
+				int tempCount =  threedSceneHelp[tempI].sameTageCount -1; // 
+				int tempIndex = tempI-1;
+				while(tempCount > 0)
+				{
+					threedSceneHelp[tempIndex].sameTageCount = threedSceneHelp[tempI].sameTageCount;
+					tempCount --;
+					tempIndex--;
+				}
+			}
+			tempI++;
+		}
+
+		////记录下与每个2D场景中物体tag相同的3D场景中的物体的index
+		//tempI = 0;
+		//tempJ = 0;
+		//while(tempI< twds.modelNum && tempJ< tempScene.modelSize)
+		//{
+		//	//如果2D场景中当前物体和前一个物体的tag相同，则可以直接复制前一个物体的sameTagIndex
+		//	if(tempI>0 )
+		//	{
+		//		if(twdSceneHelp[tempI].modelTag ==twdSceneHelp[tempI-1].modelTag)
+		//		{
+		//			int i = 0;
+		//			while(i < twdSceneHelp[tempI-1].sameTagIndex.size())
+		//			{
+		//				twdSceneHelp[tempI].sameTagIndex.push_back(twdSceneHelp[tempI-1].sameTagIndex[i]);
+		//				i++;
+		//			}
+		//			tempI ++;
+		//			continue;
+		//		}
+
+		//	}
+		//	//如果当前2D场景中的物体和3D场景中物体tag相同，则讲对方添加到自己的sameTagIndex中，并且在3D场景的物体列表中继续往后搜索
+		//	if(twdSceneHelp[tempI].modelTag ==threedSceneHelp[tempJ].modelTag )
+		//	{
+		//		twdSceneHelp[tempI].sameTagIndex.push_back(threedSceneHelp[tempJ].modelIndex);
+		//		tempJ++;
+		//	}
+		//	else if(twdSceneHelp[tempI].modelTag > threedSceneHelp[tempJ].modelTag)
+		//	{
+		//		tempJ ++;
+		//	}
+		//	else
+		//	{
+		//		tempI++;
+		//	}
+		//}
+
+
+		////记录下与每个3D场景中物体tag相同的2D场景中的物体的index
+		//tempI = 0;
+		//tempJ = 0;
+		//while(tempJ< twds.modelNum && tempI< tempScene.modelSize)
+		//{
+		//	//如果3D场景中当前物体和前一个物体的tag相同，则可以直接复制前一个物体的sameTagIndex
+		//	if(tempI>0 && threedSceneHelp[tempI].modelTag ==threedSceneHelp[tempI-1].modelTag)
+		//	{
+		//		int i = 0;
+		//		while(i < threedSceneHelp[tempI-1].sameTagIndex.size())
+		//		{
+		//			threedSceneHelp[tempI].sameTagIndex.push_back(threedSceneHelp[tempI-1].sameTagIndex[i]);
+		//			i++;
+		//		}
+		//		tempI ++;
+		//		continue;
+		//	}
+		//	//如果当前2D场景中的物体和3D场景中物体tag相同，则讲对方添加到自己的sameTagIndex中，并且在3D场景的物体列表中继续往后搜索
+		//	if(twdSceneHelp[tempJ].modelTag ==threedSceneHelp[tempI].modelTag )
+		//	{
+		//		threedSceneHelp[tempI].sameTagIndex.push_back(twdSceneHelp[tempJ].modelIndex);
+		//		tempJ++;
+		//	}
+		//	else if(threedSceneHelp[tempI].modelTag > twdSceneHelp[tempJ].modelTag)
+		//	{
+		//		tempJ ++;
+		//	}
+		//	else
+		//	{
+		//		tempI++;
+		//	}
+		//}//while
+
+		
 		temp1 = tempScene.modelSize;
 		for(int i=0; i<temp1; i++)
 		{
@@ -2533,15 +2605,23 @@ int Search3DSceneFromBuffer(TwoDScene twds,int **TwoDRelationship,char* err,pSce
 				tempObjMaxSimilarity += f*tempRelationshipSimilarity;
 				//importance
 				tempObjMaxSimilarity = tempObjMaxSimilarity*twds.importance[tempIndexi]*importance[tmepIndexj]; 
-				//惩罚值
-				if(twdSceneHelp[tempI].sameTagIndex.size() > threedSceneHelp[tempJ].sameTagIndex.size())
+				//惩罚值，即相似模型个数，重要程度越低
+				if(twdSceneHelp[tempI].sameTageCount > threedSceneHelp[tempJ].sameTageCount)
 				{
-					tempObjMaxSimilarity = tempObjMaxSimilarity*(1+threedSceneHelp[tempJ].sameTagIndex.size())/(1+twdSceneHelp[tempI].sameTagIndex.size()); 
+					tempObjMaxSimilarity = tempObjMaxSimilarity*(1+threedSceneHelp[tempJ].sameTageCount)/(1+twdSceneHelp[tempI].sameTageCount); 
 				}
 				else
 				{
-					tempObjMaxSimilarity = tempObjMaxSimilarity*(1+twdSceneHelp[tempI].sameTagIndex.size())/(1+threedSceneHelp[tempJ].sameTagIndex.size()); 
+					tempObjMaxSimilarity = tempObjMaxSimilarity*(1+twdSceneHelp[tempI].sameTageCount)/(1+threedSceneHelp[tempJ].sameTageCount); 
 				}
+				//if(twdSceneHelp[tempI].sameTagIndex.size() > threedSceneHelp[tempJ].sameTagIndex.size())
+				//{
+				//	tempObjMaxSimilarity = tempObjMaxSimilarity*(1+threedSceneHelp[tempJ].sameTagIndex.size())/(1+twdSceneHelp[tempI].sameTagIndex.size()); 
+				//}
+				//else
+				//{
+				//	tempObjMaxSimilarity = tempObjMaxSimilarity*(1+twdSceneHelp[tempI].sameTagIndex.size())/(1+threedSceneHelp[tempJ].sameTagIndex.size()); 
+				//}
 
 				//保存最大的相似度
 				tempObjSimilarity = tempObjMaxSimilarity > tempObjSimilarity? tempObjMaxSimilarity:tempObjSimilarity;
@@ -2568,6 +2648,7 @@ int Search3DSceneFromBuffer(TwoDScene twds,int **TwoDRelationship,char* err,pSce
 		tempScene.lightSceneModels.clear();
 		tempScene.RelationMap.clear();
 
+		//已经检索到的场景的个数
 		TopNum++;
 	}//while -- 3D场景list里的所有场景
 
@@ -2589,20 +2670,23 @@ int Search3DSceneFromBuffer(TwoDScene twds,int **TwoDRelationship,char* err,pSce
 	fclose(fpt2);
 	fclose(fpt);	
 
-	//将检索结果保存到
-	for(int i = TopNum-1; i >= 0; i--)
-	{
-		strcpy(pSceneMatResult[i].name,searchResult[i].name);
-	}
+	////因为后面直接从文件读取了结果，就不在这里存入变量之中了
+	////将检索结果保存到
+	//for(int i = TopNum-1; i >= 0; i--)
+	//{
+	//	strcpy(pSceneMatResult[i].name,searchResult[i].name);
+	//}
 
 	//释放保存3D场景的内存
 	for(int i = 0; i<MAXSEGMENTNUMBER; i++)
 	{
 		delete [] threeDRelatinoship[i];
+		threeDRelatinoship[i] = NULL;
+
 	}
 	delete [] threeDRelatinoship ;
+	threeDRelatinoship = NULL;
 
-	//return 1;
 	return TopNum;
 }
 

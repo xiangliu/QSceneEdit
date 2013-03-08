@@ -154,6 +154,7 @@
     <ClCompile Include="MathLib.cpp" />
     <ClCompile Include="ImageSeg\MeanShift.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="QModelListDialog.cpp" />
     <ClCompile Include="QPictureDisplay.cpp" />
     <ClCompile Include="QSceneDisplay.cpp" />
     <ClCompile Include="QSearchListDisplay.cpp" />
@@ -357,6 +358,16 @@
     <ClInclude Include="MathLib.h" />
     <ClInclude Include="ImageSeg\MeanShift.h" />
     <ClInclude Include="Model.h" />
+    <CustomBuild Include="QModelListDialog.h">
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe;QModelListDialog.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe  -DUNICODE -DWIN32 -DQT_LARGEFILE_SUPPORT -DQT_DLL -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_HAVE_MMX -DQT_HAVE_3DNOW -DQT_HAVE_SSE -DQT_HAVE_MMXEXT -DQT_HAVE_SSE2 -DQT_THREAD_SUPPORT -I&quot;c:\Qt\4.8.2\include\QtCore&quot; -I&quot;c:\Qt\4.8.2\include\QtGui&quot; -I&quot;c:\Qt\4.8.2\include\QtOpenGL&quot; -I&quot;c:\Qt\4.8.2\include&quot; -I&quot;c:\OpenCV2.2\include\opencv&quot; -I&quot;c:\OpenCV2.2\include&quot; -I&quot;c:\Qt\4.8.2\include\ActiveQt&quot; -I&quot;debug&quot; -I&quot;.&quot; -Ic:\Qt\4.8.2\mkspecs\default -D_MSC_VER=1600 -DWIN32 QModelListDialog.h -o debug\moc_QModelListDialog.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">MOC QModelListDialog.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">debug\moc_QModelListDialog.cpp;%(Outputs)</Outputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe;QModelListDialog.h;%(AdditionalInputs)</AdditionalInputs>
+      <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe  -DUNICODE -DWIN32 -DQT_LARGEFILE_SUPPORT -DQT_DLL -DQT_NO_DEBUG -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_HAVE_MMX -DQT_HAVE_3DNOW -DQT_HAVE_SSE -DQT_HAVE_MMXEXT -DQT_HAVE_SSE2 -DQT_THREAD_SUPPORT -I&quot;c:\Qt\4.8.2\include\QtCore&quot; -I&quot;c:\Qt\4.8.2\include\QtGui&quot; -I&quot;c:\Qt\4.8.2\include\QtOpenGL&quot; -I&quot;c:\Qt\4.8.2\include&quot; -I&quot;c:\OpenCV2.2\include\opencv&quot; -I&quot;c:\OpenCV2.2\include&quot; -I&quot;c:\Qt\4.8.2\include\ActiveQt&quot; -I&quot;release&quot; -I&quot;.&quot; -Ic:\Qt\4.8.2\mkspecs\default -D_MSC_VER=1600 -DWIN32 QModelListDialog.h -o release\moc_QModelListDialog.cpp</Command>
+      <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">MOC QModelListDialog.h</Message>
+      <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">release\moc_QModelListDialog.cpp;%(Outputs)</Outputs>
+    </CustomBuild>
     <CustomBuild Include="QPictureDisplay.h">
       <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe;QPictureDisplay.h;%(AdditionalInputs)</AdditionalInputs>
       <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\moc.exe  -DUNICODE -DWIN32 -DQT_LARGEFILE_SUPPORT -DQT_DLL -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_CORE_LIB -DQT_HAVE_MMX -DQT_HAVE_3DNOW -DQT_HAVE_SSE -DQT_HAVE_MMXEXT -DQT_HAVE_SSE2 -DQT_THREAD_SUPPORT -I&quot;c:\Qt\4.8.2\include\QtCore&quot; -I&quot;c:\Qt\4.8.2\include\QtGui&quot; -I&quot;c:\Qt\4.8.2\include\QtOpenGL&quot; -I&quot;c:\Qt\4.8.2\include&quot; -I&quot;c:\OpenCV2.2\include\opencv&quot; -I&quot;c:\OpenCV2.2\include&quot; -I&quot;c:\Qt\4.8.2\include\ActiveQt&quot; -I&quot;debug&quot; -I&quot;.&quot; -Ic:\Qt\4.8.2\mkspecs\default -D_MSC_VER=1600 -DWIN32 QPictureDisplay.h -o debug\moc_QPictureDisplay.cpp</Command>
@@ -466,6 +477,12 @@
     <ClInclude Include="trimesh\timestamp.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="debug\moc_QModelListDialog.cpp">
+      <ExcludedFromBuild Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="release\moc_QModelListDialog.cpp">
+      <ExcludedFromBuild Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="debug\moc_QPictureDisplay.cpp">
       <ExcludedFromBuild Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">true</ExcludedFromBuild>
     </ClCompile>
@@ -538,17 +555,19 @@
   <ItemGroup>
     <CustomBuild Include="QSceneEdit.qrc">
       <FileType>Document</FileType>
-      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe;QSceneEdit.qrc;image\brush.png;image\choose.png;image\display.png;image\eraser.png;image\obj_rotate.png;image\obj_trans.png;image\open.png;image\pickup.png;image\relationship.png;image\rotate.png;image\save.png;image\search.png;image\segment.png;image\trans.png;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe;QSceneEdit.qrc;image\SearchInseatObject.png;image\brush.png;image\choose.png;image\contextSearch.png;image\display.png;image\eraser.png;image\obj_rotate.png;image\obj_trans.png;image\open.png;image\pickup.png;image\relationship.png;image\rotate.png;image\save.png;image\search.png;image\segment.png;image\trans.png;%(AdditionalInputs)</AdditionalInputs>
       <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe -name QSceneEdit QSceneEdit.qrc -o debug\qrc_QSceneEdit.cpp</Command>
       <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">RCC QSceneEdit.qrc</Message>
       <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">debug\qrc_QSceneEdit.cpp;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe;QSceneEdit.qrc;image\brush.png;image\choose.png;image\display.png;image\eraser.png;image\obj_rotate.png;image\obj_trans.png;image\open.png;image\pickup.png;image\relationship.png;image\rotate.png;image\save.png;image\search.png;image\segment.png;image\trans.png;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe;QSceneEdit.qrc;image\SearchInseatObject.png;image\brush.png;image\choose.png;image\contextSearch.png;image\display.png;image\eraser.png;image\obj_rotate.png;image\obj_trans.png;image\open.png;image\pickup.png;image\relationship.png;image\rotate.png;image\save.png;image\search.png;image\segment.png;image\trans.png;%(AdditionalInputs)</AdditionalInputs>
       <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe -name QSceneEdit QSceneEdit.qrc -o release\qrc_QSceneEdit.cpp</Command>
       <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">RCC QSceneEdit.qrc</Message>
       <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">release\qrc_QSceneEdit.cpp;%(Outputs)</Outputs>
     </CustomBuild>
+    <None Include="image\SearchInseatObject.png" />
     <None Include="image\brush.png" />
     <None Include="image\choose.png" />
+    <None Include="image\contextSearch.png" />
     <None Include="image\display.png" />
     <None Include="image\eraser.png" />
     <None Include="image\obj_rotate.png" />

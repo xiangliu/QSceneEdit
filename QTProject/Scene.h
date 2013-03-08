@@ -15,6 +15,11 @@
 
 using namespace std;
 
+/*
+warning: 在计算场景中model个数的时候，一定要使用modelSize变量，因为在插入输入框的时候，真正的model还没有被
+放进来，但是已经生成一个model将其放置到保存所有模型的vector之中
+*/
+
 // 不处理Material则注释
 //#ifndef DefMaterial
 //#define  DefMaterial
@@ -35,6 +40,11 @@ public:
 
 	// 主要属性
 public:
+
+	////用于指示场景所在的状态，比如显示场景中的模型、显示场景中某个模型的包围盒、显示场景中待插入的模型的包围盒
+	//enum SceneDrawState{DrawSceneModel, DrawSceneModelBBox, DrawSceneModelInseartBBox};
+	//SceneDrawState sceneDrawState; //用于指示场景当前的状态
+
 	string scenePath; // obj所在的路径，E://abc//a.obj
 	string dirPath; //  根路径，如：E://abc//；
 
@@ -69,9 +79,10 @@ public:
 	int** relationTable;  // 关系表单
 	map<string,int> ModelMap; // Tag : Model_index
 	map<string,vector<int>> RelationMap; // Tag : Relationship
-
-	box bbox; //包围盒
+	box objectSearchBBox;  //用于检索单个物体摆放至场景中的包围盒
+	box bbox; //整个场景的包围盒
 	BSphere bsphere; // 包围球
+	point sceneCenter;   //用于指示整个场景的中心，由计算场景包围盒的算法去计算
 
 	// 主要操作方法
 public:
@@ -91,7 +102,8 @@ public:
 	/************************************************************************/
 	void LightReadRelationFile(string path); // 轻量级的读取path对应的场景配置文件，用于3D场景检索
 	void BuildRelationTable1(int **relationTable); //added by liuxiang
-	
+	void DrawModelSearchBBox();   //用来往场景中添加用于单个物体检索的立方体
+
 	// 辅助操作
 private:
 	// return false,没有找到对应格式处理程序

@@ -17,10 +17,10 @@
 #define EDGEIMPORTANCE 0.5
 
 //用来定义检索后保留的最相似的3D模型的个数
-#define SEARCHRESULTNUMBER 8
+#define MODELSEARCHRESULTNUMBER 18
 
 //用来定义检索后保留的最相似的场景个数
-#define SCENEFORDISPLAY 12
+#define SCENEFORDISPLAY 30
 
 #define BUFSIZE 512
 

@@ -15,6 +15,7 @@
 #include <QComboBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+
 #include <QSplitter>
 #include <QPushButton>
 #include <QStandardItemModel>

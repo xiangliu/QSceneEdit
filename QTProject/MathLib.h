@@ -145,7 +145,8 @@ typedef struct ThreeDSceneSearchHelp
 {
 	string modelTag;  //用于表示模型的tag
 	int modelIndex;	  //用于表示模型在描述子数组中的序号
-	vector<int> sameTagIndex; //用于表示自己场景中和自身有相同tag的物体的序号
+	int sameTageCount;  //与该模型相同tag数量的模型个数，包括自己本身
+	//vector<int> sameTagIndex; //用于表示自己场景中和自身有相同tag的物体的序号
 	vector<int> relationships;  //用于表示该物体所拥有的relationship
 	vector<string> relationshipTag;  //用于表示该物体所用于的relationship的另一端所包含物体的tag
 }ThreeDSceneSearchHelp;

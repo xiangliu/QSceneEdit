@@ -104,6 +104,9 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="QModelListDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="QPictureDisplay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -709,6 +712,9 @@
     <ClInclude Include="Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <CustomBuild Include="QModelListDialog.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
     <CustomBuild Include="QPictureDisplay.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
@@ -816,6 +822,12 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="debug\moc_QModelListDialog.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="release\moc_QModelListDialog.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
     <ClCompile Include="debug\moc_QPictureDisplay.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
@@ -883,10 +895,16 @@
     <CustomBuild Include="QSceneEdit.qrc">
       <Filter>Resource Files</Filter>
     </CustomBuild>
+    <None Include="image\SearchInseatObject.png">
+      <Filter>Resource Files</Filter>
+    </None>
     <None Include="image\brush.png">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="image\choose.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="image\contextSearch.png">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="image\display.png">
