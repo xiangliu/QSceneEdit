@@ -593,16 +593,15 @@ void MainWindow::Search3DScenes()
 
 		////检索
 		int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);
-		if(!resultSum)
-		{
-			//MessageBox("Scene search failed：%s",err);
-			/*QMessageBox::warning(this,tr("Scenes Search"),tr("Search failed!"),QMessageBox::Yes);
-			return;*/
-		}
-		else
-		{
-			//QMessageBox::information(this,tr("Scenes Search"),tr("Search finished!"),QMessageBox::Yes);
-		}
+		//if(!resultSum)
+		//{
+		//	//QMessageBox::warning(this,tr("Scenes Search"),tr("Search failed!"),QMessageBox::Yes);
+		//	//return;
+		//}
+		//else
+		//{
+		//	//QMessageBox::information(this,tr("Scenes Search"),tr("Search finished!"),QMessageBox::Yes);
+		//}
 
 		//进行整体处理状态的改变
 		this->entireState = search3DScene;
@@ -732,7 +731,8 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 
 		//准备显示场景的widget
 		sceneDisplayWidget->resize(ui->centralWidget->width(),ui->centralWidget->height());
-		centralStackedWidget->setCurrentIndex(2);
+		int tt = centralStackedWidget->indexOf(sceneDisplayWidget);
+		centralStackedWidget->setCurrentIndex(tt);
 
 	}	
 }
