@@ -37,3 +37,6 @@ int Find3DSceneFromBuffer(TwoDScene twds,char* err,pSceneMatRes pSceneMatResult)
 
 //同样用来检索3D场景，用来检索新的数据库以及使用新的检索算法
 int Search3DSceneFromBuffer(TwoDScene twds,int **relationship,char* err,pSceneMatRes pSceneMatResult);
+
+//同样用来检索3D场景，用来检索新的数据库以及使用新的检索算法,同时还使用了场景分类，即检索的数据库只在某一类里检索
+int Search3DSceneFromBufferWithClassify(int sceneCategory,TwoDScene twds,int **relationship,char* err,pSceneMatRes pSceneMatResult);

@@ -11,6 +11,7 @@
 #include <limits.h>
 #include <float.h>
 #include <time.h>
+#include <string>
 
 #define			DataBaseModelNum    873   //模型总数
 //#define         MAXOBJECTNUMBER   50      //假定场景中物体个数最多为50个
@@ -2676,6 +2677,512 @@ int Search3DSceneFromBuffer(TwoDScene twds,int **TwoDRelationship,char* err,pSce
 	//{
 	//	strcpy(pSceneMatResult[i].name,searchResult[i].name);
 	//}
+
+	//释放保存3D场景的内存
+	for(int i = 0; i<MAXSEGMENTNUMBER; i++)
+	{
+		delete [] threeDRelatinoship[i];
+		threeDRelatinoship[i] = NULL;
+
+	}
+	delete [] threeDRelatinoship ;
+	threeDRelatinoship = NULL;
+
+	return TopNum;
+}
+
+
+//同样用来检索3D场景，用来检索新的数据库以及使用新的检索算法,同时还使用了场景分类，即检索的数据库只在某一类里检索
+int Search3DSceneFromBufferWithClassify(int sceneCategory,TwoDScene twds,int **TwoDRelationship,char* err,pSceneMatRes pSceneMatResult)
+{
+
+	// for region shape descriptor
+	int			    TopNum;
+	pMatRes		    pTop; //这是指单个物体的匹配度
+	FILE			*fpt, *fpt1,*fpt2;
+	char			filename[200],destfn[200];//srcfn用来保存用户输入的模型
+
+	////******************保存照片描述子***********************
+	Scene tempScene;  //用于保存检索时数据库中的3D场景的临时变量
+	vector<ThreeDSceneSearchHelp> twdSceneHelp;  //进行场景的描述子等比较时的辅助变量
+	vector<ThreeDSceneSearchHelp> threedSceneHelp;
+	char temp2[400]; //用来保存临时读取的scene.txt的每一行内容
+	int temp3,temp5; //临时变量
+	float temp4;
+	char* next;
+	char* next1;
+	char threedTag[MAXSEGMENTNUMBER][30]; //用来保存三维场景物体tag的变量，假定物体个数不超过50，且tag长度不超过30
+	int tagFlag[MAXSEGMENTNUMBER]; //用于tag比较时候的临时变量
+	int **threeDRelatinoship; //用于临时保存三维场景中物体之间的relationship，假定物体不超过50个
+	int edgeCount[10]; //用来记录某个物体所包含relationship的个数 辅助数组，因为总共就8种relationship
+	float tempSimilarity; //用来临时存储两个场景之间的相似度
+	float tempObjSimilarity; //用来临时存储两个物体之间的相似度
+	MatResTemp matresT[MAXSEGMENTNUMBER][20]; //用来记录每个物体对应另一个场景中相同tag物体的相似度,同样假定物体不超过50个，每个物体相同标签的个数不超过10个
+	int sameTagCount[MAXSEGMENTNUMBER]; //记录每个物体在被检索3D场景中有相似标签的物体个数
+	int modelNumber; //用于记录被分割三维场景中物体个数
+	float importance[MAXSEGMENTNUMBER]; //用于记录物体的重要程度，重要程度正比于物体大小和反比于相同tag物体个数
+	vector<int> temp6; //辅助数组
+
+	//****************最终similarity中各个部分之间的权重*******************
+	float a = 5.0; //用来表示两个物体relationship中tag相似度权重
+	float b = 3.0; //用来表示两个物体relationship中的relationship相似度权重
+	float c = 2.0; //用来表示两个物体relationship中相同tag和relationship组的奖励值
+	//float d = 0.25; //用来表示两个物体<edge,partner>相似度中partner的权重
+	float e = 6.0; //用来表示两个物体geometry相似度部分的权重
+	float f = 4.0; //用来表示两个物体relationship相似度部分的权重
+
+	//pTop = (pMatRes) malloc (SCENEFORDISPLAY * sizeof(MatRes));  //保存匹配结果的变量分配,暂定选择10个
+	vector<SceneMatRes> searchResult;          //保存检索结果
+	SceneMatRes tempResult;
+
+	//开辟保存3D场景relationship的内存
+	threeDRelatinoship = new int*[MAXSEGMENTNUMBER];
+	for(int i = 0; i<MAXSEGMENTNUMBER; i++)
+	{
+		threeDRelatinoship[i] = new int[MAXSEGMENTNUMBER];
+	}
+
+	// initialize: read camera pair
+	fpt = fopen("SearchConfigure\\q8_table", "rb");
+	if(fpt == NULL)
+	{
+		sprintf(err,"Can't open file : q8_table! \n");
+		return 0;
+	}
+	else
+	{
+		fread(q8_table, sizeof(unsigned char), 65536, fpt);
+		fclose(fpt);
+	}
+
+
+	// initialize: read camera pair
+	//貌似在这里不需要了
+	fpt = fopen("SearchConfigure\\align10.txt", "rb");
+	if(fpt == NULL)
+	{
+		sprintf(err,"Can't open file : align10.txt! \n");
+		return 0;
+	}
+	fread(align10, sizeof(unsigned char), 60*CAMNUM_2, fpt);
+	fclose(fpt);
+
+	//*********************读照片的分割结果的描述子******************************/
+	int temp1 = twds.modelNum;
+
+	if(temp1>MAXSEGMENTNUMBER)  //默认被分割场景中物体个数不超过50个
+	{
+		err = "The segement number is max than MAXSEGMENTNUMBER!";
+	}
+
+	//数据准备
+	ThreeDSceneSearchHelp tt;  //场景数据转换的辅助变量
+	for(int i = 0; i< twds.modelNum ;i++) //用于获取2D场景中的所有tag
+	{	
+		tt.modelIndex = i;
+		tt.modelTag = string(twds.tag1[i]);
+		tt.sameTageCount = 1;  //用于初始化
+
+		//处理每个物体拥有的relationship以及relationship另外一头的tag
+		for(int j = 0; j<twds.modelNum ; j++)
+		{
+			if(TwoDRelationship[i][j]!= 0)  //'0'默认为无关系
+			{
+				tt.relationships.push_back( TwoDRelationship[i][j]);
+				tt.relationshipTag.push_back( twds.tag1[j]);
+			}
+		}
+		twdSceneHelp.push_back(tt);
+	}
+	sort(twdSceneHelp.begin(),twdSceneHelp.end(),compareTwoSearchHelp);  //升序排序
+
+	//**************读取新的3D场景中所有场景的描述子并进行匹配***************************/
+	//具体顺序：
+	//1.读取场景库中场景列表,其中场景列表保存在NewSceneModelList.txt（对于后续分类型的检索可以分文件夹检索）
+	//2.按先后顺序读取场景列表中的场景，《--先读取场景信息scene.txt；--》此处改成读取场景的conference_room26.fbx
+	//3.先比较scene.txt与照片场景中tag重合度，如果重合度大于阀值，继续，否则返回2读取下一个场景
+	//4.再比较两个场景中相同标签的relationship和partner（这里相同标签的定义可能需要斟酌）
+	//5.将最终的相似度保存，返回2
+	//6.结束
+
+	//第一步：打开场景列表
+	//switch(sceneCategory)
+	//{
+	//case 1:
+	//	fpt = fopen("SearchConfigure\\bedroomSceneList.txt", "r");
+	//	break;
+	//case 2:
+	//	fpt = fopen("SearchConfigure\\conferenceroomSceneList.txt", "r");
+	//	break;
+	//case 3:
+	//	fpt = fopen("SearchConfigure\\diningroomSceneList.txt", "r");
+	//	break;
+	//case 4:
+	//	fpt = fopen("SearchConfigure\\kitchenSceneList.txt", "r");
+	//	break;
+	//default:
+	//	fpt = fopen("SearchConfigure\\livingroomSceneList.txt", "r");
+	//	break;
+	//}
+	fpt = fopen("SearchConfigure\\NewSceneModelList.txt", "r");
+	if(fpt == NULL)
+	{
+		sprintf(err,"Can't open file : NewSceneModelList.txt! \n");
+		return 0;
+	}
+
+	//**********************第二步：循环读取场景列表中的场景信息************
+	TopNum = 0; //记录已经检索到的场景的个数
+	while( fgets(destfn, 200, fpt) )
+	{
+		//给读到的字符串加上结束符
+		destfn[strlen(destfn)-1] = 0x00;
+
+		//修改文件名，在名字最后加上Relationship.cng,用来读取场景tag和relationship信息
+		sprintf(filename, "%sRelationship.cng", destfn);
+		string filePath(filename); //将char* 转string
+		tempScene.LightReadRelationFile(filePath);//通过调用Scene中的函数来读取3D场景信息
+		//为threeDRelatinoship初始化
+		for(int i = 0; i< MAXSEGMENTNUMBER; i++)
+		{
+			memset(threeDRelatinoship[i],0,MAXSEGMENTNUMBER*4);
+		}
+		tempScene.BuildRelationTable1(threeDRelatinoship);   //为3D场景建立relationship table
+
+		//********************第三步***********************
+		/************************************************************************/
+		/*比较照片场景和3D场景tag之间的相似度,方法将2D场景和3D场景中的标签都存入一个vector<string>中
+		  随后对两个vector进行排序，然后从头比到结束就可以了*/
+		/************************************************************************/
+
+		//*****************因为该部分只需要针对2D场景提取一次，所以应该放到while循环外面
+		//ThreeDSceneSearchHelp tt;  //场景数据转换的辅助变量
+		//for(int i = 0; i< twds.modelNum ;i++) //用于获取2D场景中的所有tag
+		//{	
+		//	tt.modelIndex = i;
+		//	tt.modelTag = string(twds.tag1[i]);
+		//	twdSceneHelp.push_back(tt);
+		//}
+		//sort(twdSceneHelp.begin(),twdSceneHelp.end(),compareTwoSearchHelp);  //升序排序
+		   
+		for(int i = 0; i< tempScene.modelSize ;i++)//用于获取3D场景中的所有tag
+		{
+			importance[i] = 1; //暂时不对importance最处理，后面会根据tag进行处理
+			tt.modelIndex = i;
+			tt.modelTag = tempScene.lightSceneModels[i].modelTag;
+			tt.sameTageCount = 1; //用于初始化
+
+			//处理每个物体拥有的relationship以及relationship另外一头的tag
+			for(int j = 0; j<tempScene.modelSize ; j++)
+			{
+				if(threeDRelatinoship[i][j]!= '0')  //'0'默认为无关系
+				{
+					tt.relationships.push_back( threeDRelatinoship[i][j] - '0');
+					tt.relationshipTag.push_back( tempScene.lightSceneModels[j].modelTag);
+				}
+			}
+
+			threedSceneHelp.push_back(tt);
+		}
+		sort(threedSceneHelp.begin(),threedSceneHelp.end(),compareTwoSearchHelp);  //升序排序
+
+		temp3 = 0; //用来记录两个场景中相同标签的个数
+		int tempI = 0; //用来标识twdSceneTag中元素的序号临时变量
+		int tempJ = 0; //用来标识threedSceneTag中元素的序号临时变量
+		while(tempI< twds.modelNum && tempJ< tempScene.modelSize) //进行比较
+		{
+			if(twdSceneHelp[tempI].modelTag ==threedSceneHelp[tempJ].modelTag )
+			{
+				tempI++;
+				tempJ++;
+				temp3++;
+			}
+			else if(twdSceneHelp[tempI].modelTag > threedSceneHelp[tempJ].modelTag)
+			{
+				tempJ++;
+			}
+			else
+			{
+				tempI++;
+			}
+		}
+
+		//计算tag相关度（此处值得商榷，因为目标场景中的物体可能被剔除，所以可能影响不大）
+		temp4 = (float)temp3/(tempScene.modelSize + twds.modelNum);
+		//看看tag相关度是否低于阀值，如果低于，直接进入下一个场景比较，这里讲阀值设置为0.2(测试的时候用0.01)
+		if(temp4 < 0.1)    
+		{ 
+			//将循环使用的变量清空，恢复原值
+			//1.清空threedSceneHelp
+			threedSceneHelp.clear();
+			//2.清空tempScene
+			tempScene.lightSceneModels.clear();
+			tempScene.RelationMap.clear();
+			continue;
+		}
+
+		//分别计算2D和3D场景中相同tag的模型的个数
+		tempI = 1;
+		while (tempI< twds.modelNum)
+		{
+			if(twdSceneHelp[tempI].modelTag ==twdSceneHelp[tempI-1].modelTag)
+			{
+				//如果与前一个tag相同，则数目增1
+				twdSceneHelp[tempI].sameTageCount = twdSceneHelp[tempI-1].sameTageCount +1;
+			}
+			else
+			{
+				//逆序去给每个模型都赋值相同tag个数
+				int tempCount =  twdSceneHelp[tempI-1].sameTageCount -1; // 
+				int tempIndex = tempI-2;
+				while(tempCount > 0)
+				{
+					twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[tempI-1].sameTageCount;
+					tempCount --;
+					tempIndex--;
+				}
+			}
+
+			if(tempI ==(twds.modelNum -1) && twdSceneHelp[tempI].sameTageCount>1)
+			{
+				//逆序去给每个模型都赋值相同tag个数
+				int tempCount =  twdSceneHelp[tempI].sameTageCount -1; // 
+				int tempIndex = tempI-1;
+				while(tempCount > 0)
+				{
+					twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[tempI].sameTageCount;
+					tempCount --;
+					tempIndex--;
+				}
+			}
+			tempI++;
+		}
+
+		tempI = 1;
+		while (tempI< tempScene.modelSize)
+		{
+			if(threedSceneHelp[tempI].modelTag ==threedSceneHelp[tempI-1].modelTag)
+			{
+				//如果与前一个tag相同，则数目增1
+				threedSceneHelp[tempI].sameTageCount = threedSceneHelp[tempI-1].sameTageCount +1;
+			}
+			else
+			{
+				//逆序去给每个模型都赋值相同tag个数
+				int tempCount =  threedSceneHelp[tempI-1].sameTageCount -1; // 
+				int tempIndex = tempI-2;
+				while(tempCount > 0)
+				{
+					threedSceneHelp[tempIndex].sameTageCount = threedSceneHelp[tempI-1].sameTageCount;
+					tempCount --;
+					tempIndex--;
+				}
+			}
+
+			if(tempI ==(tempScene.modelSize -1) && threedSceneHelp[tempI].sameTageCount>1)
+			{
+				//逆序去给每个模型都赋值相同tag个数
+				int tempCount =  threedSceneHelp[tempI].sameTageCount -1; // 
+				int tempIndex = tempI-1;
+				while(tempCount > 0)
+				{
+					threedSceneHelp[tempIndex].sameTageCount = threedSceneHelp[tempI].sameTageCount;
+					tempCount --;
+					tempIndex--;
+				}
+			}
+			tempI++;
+		}
+
+		
+		temp1 = tempScene.modelSize;
+		for(int i=0; i<temp1; i++)
+		{
+			// ART
+			sprintf(filename, "%s%s_q8_v1.8.art", destfn,tempScene.lightSceneModels[i].modelName.c_str());
+			if( (fpt2 = fopen(filename, "rb")) == NULL )			
+			{	printf("%s does not exist.\n", filename);	return 0;	}
+			fread(dest_ArtCoeff2[i], ANGLE * CAMNUM * ART_COEF, sizeof(unsigned char), fpt2);
+			fclose(fpt2);
+			// FD
+			sprintf(filename, "%s%s_q8_v1.8.fd", destfn,tempScene.lightSceneModels[i].modelName.c_str());
+			if( (fpt2 = fopen(filename, "rb")) == NULL )			{	printf("%s does not exist.\n", filename);	return 0;	}
+			fread(dest_FdCoeff_q82[i], sizeof(unsigned char),  ANGLE * CAMNUM * FD_COEF, fpt2);
+			fclose(fpt2);
+			// CIR
+			sprintf(filename, "%s%s_q8_v1.8.cir", destfn,tempScene.lightSceneModels[i].modelName.c_str());
+			if( (fpt2 = fopen(filename, "rb")) == NULL )			{	printf("%s does not exist.\n", filename);	return 0;	}
+			fread(dest_CirCoeff_q82[i], sizeof(unsigned char),  ANGLE * CAMNUM, fpt2);
+			fclose(fpt2);
+			// ECC
+			sprintf(filename, "%s%s_q8_v1.8.ecc", destfn,tempScene.lightSceneModels[i].modelName.c_str());
+			if( (fpt2 = fopen(filename, "rb")) == NULL )			{	printf("%s does not exist.\n", filename);	return 0;	}
+			fread(dest_EccCoeff_q82[i], sizeof(unsigned char),  ANGLE * CAMNUM, fpt2);
+			fclose(fpt2);
+		}
+
+
+		//记录每个2D场景中物体和3D场景中相同标签物体的相似度以及3D场景中每个物体的importance
+		//随后再获取每个2D场景中的物体所能从3D场景中相同tag物体处获取的最大相似度
+		//最终累积到两个场景的相似度之中
+		int tempIndexi = 0;
+		int tmepIndexj = 0;
+		tempSimilarity = 0.0f; //保存2D场景和3D场景的总体相似度
+		float tempObjMaxSimilarity ; //用于保存2D场景中某个物体和3D场景中相同tag物体能获得的当前最大相似度
+		float tempRelationshipSimilarity; //用于临时保存两个物体的relationship相似度
+		int sameTagCount;
+		int sameRelationshipCount;
+		int sameTagAndRelCount;
+		int tempSum;
+		tempI = 0;
+		tempJ = 0;
+		bool firstStepInTag = true;    //用来记录是否是第一次碰到相同tag的物体，是就是true， 不是就是false；
+		int sameTagBegineIndex = 0;     //保存相同tag的3D场景的物体的index开始位置
+		
+		//计算每一个2D场景中的物体与3D场景中物体的最大相似度，并累加到总体的场景相似度中
+		for(tempI = 0; tempI < twds.modelNum; tempI++)
+		{
+			//首先寻找相同tag的3D场景中的物体位置
+			tempJ = 0;
+			while( tempJ < tempScene.modelSize && twdSceneHelp[tempI].modelTag > threedSceneHelp[tempJ].modelTag )
+			{
+				tempJ ++;
+			}
+			//说明index为tempI的2D场景中的物体在3D场景中没有与之tag相同的物体
+			if(tempJ < tempScene.modelSize && twdSceneHelp[tempI].modelTag < threedSceneHelp[tempJ].modelTag)
+			{
+				continue;
+			}
+
+			//计算与index为tempI的2D场景中的物体相同tag的所有物体相似度，并取最大值累加到场景相似度
+			tempObjSimilarity = 0.0f;  //保存2D场景中物体能与3D场景中相同tag物体所获得的最大相似度
+			tempIndexi = twdSceneHelp[tempI].modelIndex;  //记录当前2D场景中物体序号
+			while(tempJ< tempScene.modelSize && twdSceneHelp[tempI].modelTag == threedSceneHelp[tempJ].modelTag)
+			{
+				tempObjMaxSimilarity = 0.0f;
+				tempRelationshipSimilarity = 0.0f;
+
+				//获取月tempI相同tag的3D场景中的物体的index
+				tmepIndexj = threedSceneHelp[tempJ].modelIndex;
+
+				//1.几何相似度
+				tempObjMaxSimilarity += e*MatchLF3(tempIndexi,tmepIndexj); 
+
+				//2.relationship相似度
+				//2.1 tag相似度 和 2.2 relationshipTag相似度 和2.3 奖励值
+				sameTagCount = 0;
+				sameRelationshipCount = 0;
+				sameTagAndRelCount = 0;
+				bool relationBool = false;   //以检验2D场景中的某个物体的relationship对应的relationshipTag是否已经在3D场景中对应物体tempJ的relationship中找到了相同的relationshipTag
+				bool tagBool = false;  //以检验2D场景中的某个物体的relationship对应的tag是否已经在3D场景中对应物体tempJ的relationship中找到了相同的tag
+				//统计相同的tag以及relationshiptag
+				for(int i = 0; i<twdSceneHelp[tempI].relationshipTag.size() ; i++)
+				{
+					relationBool = false; 
+					tagBool = false;
+					for(int j =0; j< threedSceneHelp[tempJ].relationshipTag.size() ; j++)
+					{
+						if(!tagBool && twdSceneHelp[tempI].relationshipTag[i] == threedSceneHelp[tempJ].relationshipTag[j] )
+						{
+							++sameTagCount ;
+							tagBool = true;
+						}
+
+						if(!relationBool && twdSceneHelp[tempI].relationships[i] == threedSceneHelp[tempJ].relationships[j] )
+						{
+							++sameRelationshipCount;
+							relationBool = true;
+						}
+
+						if(twdSceneHelp[tempI].relationships[i] == threedSceneHelp[tempJ].relationships[j] && twdSceneHelp[tempI].relationshipTag[i] == threedSceneHelp[tempJ].relationshipTag[j] )
+						{
+							//++sameRelationshipCount;
+							++sameTagAndRelCount;
+							break;
+						}
+
+					}//for
+				}//for
+
+				//两个场景中相同tag的物体的个数之和
+				tempSum = twdSceneHelp[tempI].relationshipTag.size() + threedSceneHelp[tempJ].relationshipTag.size();
+
+				//保证被检索的物体有relationship
+				if(tempSum > 0)
+				{
+					tempRelationshipSimilarity +=  a*(sameTagCount*2/ (float)tempSum) ;  //2.1 tag相同值
+					tempRelationshipSimilarity +=  b*(sameRelationshipCount*2/ (float)tempSum) ;  //2.2 relationship相同值
+					tempRelationshipSimilarity +=  c*(sameTagAndRelCount*2/ (float)tempSum) ;  //2.2  奖励值
+				}
+
+				tempObjMaxSimilarity += f*tempRelationshipSimilarity;
+				//importance
+				tempObjMaxSimilarity = tempObjMaxSimilarity*twds.importance[tempIndexi]*importance[tmepIndexj]; 
+				//惩罚值，即相似模型个数，重要程度越低
+				if(twdSceneHelp[tempI].sameTageCount > threedSceneHelp[tempJ].sameTageCount)
+				{
+					tempObjMaxSimilarity = tempObjMaxSimilarity*(1+threedSceneHelp[tempJ].sameTageCount)/(1+twdSceneHelp[tempI].sameTageCount); 
+				}
+				else
+				{
+					tempObjMaxSimilarity = tempObjMaxSimilarity*(1+twdSceneHelp[tempI].sameTageCount)/(1+threedSceneHelp[tempJ].sameTageCount); 
+				}
+				//if(twdSceneHelp[tempI].sameTagIndex.size() > threedSceneHelp[tempJ].sameTagIndex.size())
+				//{
+				//	tempObjMaxSimilarity = tempObjMaxSimilarity*(1+threedSceneHelp[tempJ].sameTagIndex.size())/(1+twdSceneHelp[tempI].sameTagIndex.size()); 
+				//}
+				//else
+				//{
+				//	tempObjMaxSimilarity = tempObjMaxSimilarity*(1+twdSceneHelp[tempI].sameTagIndex.size())/(1+threedSceneHelp[tempJ].sameTagIndex.size()); 
+				//}
+
+				//保存最大的相似度
+				tempObjSimilarity = tempObjMaxSimilarity > tempObjSimilarity? tempObjMaxSimilarity:tempObjSimilarity;
+
+				tempJ ++ ;  //匹配下一个与之相似的物体
+			}//while
+
+			//将当前物体tempI能找到的最大相似度加入到场景的总相似度中
+			tempSimilarity += tempObjSimilarity;
+
+		}//for
+
+	
+		//再将当前的检索结果插入检索结果队列
+		//将全部结果插入vector，然后再排序，取出最匹配的《这里的最匹配是指最大的》
+		tempResult.similarity = tempSimilarity;
+		strcpy(tempResult.name, destfn);
+		searchResult.push_back(tempResult);	
+
+		//将循环使用的变量清空，恢复原值
+		//1.清空threedSceneHelp
+		threedSceneHelp.clear();
+		//2.清空tempScene
+		tempScene.lightSceneModels.clear();
+		tempScene.RelationMap.clear();
+
+		//已经检索到的场景的个数
+		TopNum++;
+	}//while -- 3D场景list里的所有场景
+
+	//对检索结果进行排序
+	sort(searchResult.begin(),searchResult.end(),compareSearchResult);  //升序排序
+
+	//将检索结果输出到文件
+	if( (fpt2 = fopen("SearchResult\\NewSceneDisplay.txt", "w")) == NULL )				
+	{	
+		printf("NewSceneDisplay.txt does not exist.\n", filename);	
+	}
+	else
+	{
+		for(int i = TopNum-1; i >= 0; i--)
+		{
+			fprintf(fpt2, "%s\n",searchResult[i].name);
+		}
+	}
+	fclose(fpt2);
+	fclose(fpt);	
+
 
 	//释放保存3D场景的内存
 	for(int i = 0; i<MAXSEGMENTNUMBER; i++)

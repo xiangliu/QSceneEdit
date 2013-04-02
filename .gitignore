@@ -43,6 +43,8 @@ local.properties
 /QTProject/SearchSource/
 /QTProject/SearchResult/
 /QTProject/SearchConfigure/
+/QTProject/3DModelDatabase/
+/QTProject/databseFor3D/
 
 # User-specific files
 *.suo

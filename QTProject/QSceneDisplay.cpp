@@ -1,6 +1,9 @@
 #include "QSceneDisplay.h"
 #include <QMessageBox>
 #include <fstream>
+#include <iostream>
+#include <algorithm>
+using namespace std;
 
 #define BUFFER_LENGTH 64
 const float PI=3.1415926;
@@ -173,15 +176,19 @@ void QSceneDisplay::mousePressEvent(QMouseEvent *event)
 	if (event->button()==Qt::LeftButton)
 	{
 		//表明拾取阶段
-		if (sceneDisplayState==PrepareState)
+		//if (sceneDisplayState==PrepareState)
+		//{
+			//ProcessSelection(btnDown.x(),btnDown.y());
+		if( ProcessSelection(btnDown.x(),btnDown.y()))
 		{
-			ProcessSelection(btnDown.x(),btnDown.y());
+			this->sceneDisplayState = ObjectSelected; //进入拾取阶段,表明拾取到了物体
 		}
-		//表明检索到单个model之后点击加入场景之中
-		else if(this->sceneDisplayState == SearchSingleModel)
-		{
+		//}
+		////表明检索到单个model之后点击加入场景之中
+		//else if(this->sceneDisplayState == SearchSingleModel)
+		//{
 
-		}
+		//}
 		//else if (state==3 && isSelectedModelValid())
 		//{
 		//	int invert_y=height()-btnDown.y();
@@ -291,10 +298,22 @@ void QSceneDisplay::DrawScene()
 		occurs = it ->second;
 		scene->sceneModels[occurs]->visible=false;
 	}
+
 	scene->DrawScene();
-	if (selectModel<0)
+
+	if ( selectModel<0 )
+	{
 		return;
-	scene->sceneModels[selectModel]->DrawBbox();
+	}
+	//else if(selectModel > this->scene->modelSize)
+	//{
+	//	this->scene->DrawModelSearchBBox();
+	//}
+	//else
+	//{
+		scene->sceneModels[selectModel]->DrawBbox();
+	//}
+	
 }
 
 void QSceneDisplay::ChooseModelAction()
@@ -302,8 +321,9 @@ void QSceneDisplay::ChooseModelAction()
 	sceneDisplayState = PrepareState; // 选择模型
 }
 
-void QSceneDisplay::ProcessSelection( int xPos,int yPos )
+int QSceneDisplay::ProcessSelection( int xPos,int yPos )
 {
+	int returnValue = 0; //用于定义返回值，0表示未拾取到物体，1表示拾取到物体
 	GLfloat aspect;
 	GLuint selectBuff[BUFFER_LENGTH];
 	GLint hits,viewport[4];
@@ -326,12 +346,17 @@ void QSceneDisplay::ProcessSelection( int xPos,int yPos )
 	hits=glRenderMode(GL_RENDER);
 
 	if(hits>=1)
+	{
 		ProcessModels(selectBuff);
+		returnValue = 1;
+	}
 
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 
 	glMatrixMode(GL_MODELVIEW);
+
+	return returnValue;
 }
 
 void QSceneDisplay::ProcessModels( GLuint *pSelectBuff )
@@ -378,47 +403,84 @@ void QSceneDisplay::SetProjectionModelView()
 	glGetIntegerv(GL_VIEWPORT,glViewM);
 }
 
+//暂时弃用该方案，由于太复杂
 //用于往场景中输入检索框，实现方式跟拾取一样，仅仅将拾取物体的id改成了新插入物体的id
 void QSceneDisplay::pickupCubeAction()
 {
+	/*
 	//插入检索框的前一状态只需要不是InseartObjectCube
 	if(sceneDisplayState != InseartObjectCube)
 	{
 		//状态转换
 		this->sceneDisplayState = InseartObjectCube;
+		//在场景之中插入保存要画的检索框的Model
+		Model* insertModel = new Model;
+		this->scene->sceneModels.push_back(insertModel);
 		//记录要画的cube
 		this->selectModel = this->scene->modelSize+1;
 
 		//绘制cube和场景
 		this->DrawScene();
 	}
+	*/
 }
+
+//bool sortRecommendModel(map<>)
+//{
+//
+//}
+typedef pair<string, float> PAIR;  
+int importanceCmp(const PAIR& x, const PAIR& y)  
+{  
+	return x.second > y.second;  
+}  
 
 //用来响应菜单的单个模型检索功能
 //该函数必须根据插入的检索框位置，通过检索算法查找到相应的模型列表，随后将模型列表传递给QModelListDialog，让其显示
+//修改之后的思路为：如果当前用户在拾取模式下选择了某个物体，我们用第二种检索策略
+//如果当前用户未选择人物物体，则使用第一种检索策略,根据物体重要程度来确定推荐的baseModel
 void QSceneDisplay::searchInseartObject()  
 {
-	//单击菜单栏的检索必须是在输入完检索框之后
-	if(this->sceneDisplayState == InseartObjectCube)
-	{
-		//状态转换
-	     this->sceneDisplayState = SearchSingleModel;
+	//状态转换
+	this->sceneDisplayState = SearchSingleModel;
 
-		 //创建dialog对话框
-		 modelListDialog = new QModelListDialog;
+	//创建dialog对话框
+	modelListDialog = new QModelListDialog;
+	//第二种检索策略
+	if(this->sceneDisplayState == ObjectSelected)
+	{
+		 //计算检索列表
+		 this->SearchModelsBySelectedLabel(this->selectModel);
+	}
+	//第一种检索策略
+	else 
+	{
+		 int maxImportantModel = 0;
+		 float maxImportant = scene->modelImportance[0];
+         for (int i = 1; i< scene->modelSize ; i++)
+         {
+			if( scene->modelImportance[i] >maxImportant)
+			{
+				maxImportantModel = i;
+				maxImportant = scene->modelImportance[i];
+			}
+         }
 
 		 //计算检索列表
-		 //searchsingleModel
-
-		 //传递检索数据给modelListDialog，并显示
-		 modelListDialog->pObjectMatchResult =this->pObjectMatchResult;
-		 connect(modelListDialog,SIGNAL(Inseart3DModel(int)),this,SLOT(Inseart3DModel(int)));
-		 int modelListDialogWidth = this->width()*0.75;
-		 int modelListDialogHeight = this->height()*0.75;
-		 modelListDialog->DownloadModelImage(modelListDialogWidth,modelListDialogHeight);
-		 modelListDialog->show();
-
+		 this->SearchModelsBySelectedLabel(maxImportantModel);
 	}
+
+	//构造推荐列表的数据,先给推荐列表排序，再选3,3,2,2,2,1,1,1,1,1,1一共11类label进行推荐，如果不够，随机推荐
+	sort(recommendLabelAndWeight.begin(),recommendLabelAndWeight.end(),importanceCmp);
+
+
+	//传递检索数据给modelListDialog，并显示
+	modelListDialog->pObjectMatchResult =this->pObjectMatchResult;
+	connect(modelListDialog,SIGNAL(Inseart3DModel(int)),this,SLOT(Inseart3DModel(int)));
+	int modelListDialogWidth = this->width()*0.75;
+	int modelListDialogHeight = this->height()*0.75;
+	modelListDialog->DownloadModelImage(modelListDialogWidth,modelListDialogHeight);
+	modelListDialog->show();
 }
 
 
@@ -440,4 +502,225 @@ void QSceneDisplay::Inseart3DModel(int selectedModel)
 
 	//重绘整个场景
 	this->DrawScene();
+}
+
+
+
+/************************************************************************/
+/*/
+//基于用于选定的模型来推荐新的模型
+//实现方案：1.读取不同场景类别下的所有标签集合
+2.存储当前场景label集合 和输入场景label集合
+3.读取不同场景下不同label的relevence label
+4.按照既有方案计算推荐label集合
+5.返回推荐label集合
+*/
+/************************************************************************/
+void QSceneDisplay::SearchModelsBySelectedLabel(int recommendBasedModel)
+{
+	//*********** 1. 读取每类场景中的所有标签*********
+	string buffer;
+	string tempSceneName,tempLable;
+	int labelNumb;
+	string inPath;
+	ifstream in;
+
+	//********** 2.存储当前场景label集合 和输入场景label集合*************
+	for(int i=0; i< scene->modelSize; i++)
+	{
+		if(currentSceneLabels.count(scene->lightSceneModels[i].modelTag))
+		{
+			currentSceneLabels[scene->lightSceneModels[i].modelTag]++;
+		}
+		else
+		{
+			currentSceneLabels.insert(make_pair(scene->lightSceneModels[i].modelTag,1));
+		}
+	}
+
+	//****************** 3.读取不同场景下不同label的relevence label ***************************
+	string tempLabel1;
+	int labelId,labelId1;
+	double relevence;
+	inPath = "SearchResult\\LabelRelevence.txt";
+	in.open(inPath);
+	if(!in)
+	{
+		//
+	}
+
+	while(!in.eof())
+	{
+		getline(in,buffer);
+		istringstream line(buffer);
+		line>>tempSceneName>>tempLable>>labelId>>tempLabel1>>labelId1>>relevence;
+		//map<string,map<string,map<int,map<string,map<int,double>>>>> sceneLabelRelevence;  //保存不同场景中不同物体label下的相关度
+		if(sceneLabelRelevence.count(tempSceneName))
+		{
+			if(sceneLabelRelevence[tempSceneName].count(tempLable))
+			{
+				if(sceneLabelRelevence[tempSceneName][tempLable].count(labelId))
+				{
+					if(sceneLabelRelevence[tempSceneName][tempLable][labelId].count(tempLabel1))
+					{
+                          sceneLabelRelevence[tempSceneName][tempLable][labelId][tempLabel1].insert(make_pair(labelId1,relevence));
+					}
+					else
+					{
+						map<int,double> temp;
+						temp.insert(make_pair(labelId1,relevence));
+						sceneLabelRelevence[tempSceneName][tempLable][labelId].insert(make_pair(tempLabel1,temp));
+					}
+				}
+				else
+				{
+					map<int,double> temp;
+					map<string,map<int,double>>temp1;
+					temp.insert(make_pair(labelId1,relevence));
+					temp1.insert(make_pair(tempLabel1,temp));
+					sceneLabelRelevence[tempSceneName][tempLable].insert(make_pair(tempLable,temp1));
+				}
+			}
+			else
+			{
+				map<int,double> temp;
+				map<string,map<int,double>>temp1;
+				map<int,map<string,map<int,double>>>temp2;
+				temp.insert(make_pair(labelId1,relevence));
+				temp1.insert(make_pair(tempLabel1,temp));
+				temp2.insert(make_pair(labelId,temp2));
+				sceneLabelRelevence[tempSceneName].insert(make_pair(tempLable,temp2));
+			}
+		}
+		else
+		{
+			map<int,double> temp;
+			map<string,map<int,double>>temp1;
+			map<int,map<string,map<int,double>>>temp2;
+			map<string,map<int,map<string,map<int,double>>>>temp3;
+			temp.insert(make_pair(labelId1,relevence));
+			temp1.insert(make_pair(tempLabel1,temp));
+			temp2.insert(make_pair(labelId,temp2));
+			temp3.insert(make_pair(tempLable,temp2));
+			sceneLabelRelevence.insert(make_pair(tempSceneName,temp3));
+		}
+		line.clear();
+		buffer.clear();
+	}
+	in.clear();
+	in.close();
+
+
+	//******************* 4.计算推荐label****************
+	//map<string,float> recommendLabelAndWeight; 
+	//map<string,map<string,map<int,map<string,map<int,double>>>>> sceneLabelRelevence;  //保存不同场景中不同物体label下的相关度
+	//a. 选定模型的relevent模型
+	//if(selectModel > 0) //表明选定了摸个模型
+	//{
+		//******************relevent 模型部分***************
+		string selectedLabel = scene->sceneModels[recommendBasedModel]->tag;  //获取被选定物体的tag
+		int selectedLabelCount = currentSceneLabels[selectedLabel];
+		map<string,map<int,double>>::iterator releventLabel = sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount].begin();
+		map<int,double>::iterator labelCountIt;
+
+		while( releventLabel != sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount].end())
+		{
+			if(currentSceneLabels.count(releventLabel->first))//表明当前场景中已有次label
+			{
+				labelCountIt = sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount][releventLabel->first].begin();
+				while( labelCountIt != sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount][releventLabel->first].end())
+				{
+					//如果当前场景拥有某label的数量<relevence label的数量，则将label加入
+					if(currentSceneLabels[releventLabel->first] < labelCountIt->first)
+					{
+						if(!recommendLabelAndWeight.count(releventLabel->first))
+						{
+							recommendLabelAndWeight.insert(make_pair(releventLabel->first,0.5*labelCountIt->second));
+						}
+					}
+					labelCountIt++;
+				}//while
+
+			}
+			else  //如果当前无此label，则直接将其添加进来
+			{
+				labelCountIt = sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount][releventLabel->first].begin();
+				recommendLabelAndWeight.insert(make_pair(releventLabel->first,0.5*labelCountIt->second));
+	    	}
+			releventLabel++;
+		}
+
+		//**************** 输入场景和现有场景比对部分*********************
+		//map<string,int>sourceSceneLabels;
+		map<string,int>::iterator  siIt= sourceSceneLabels.begin();
+		while ( siIt != sourceSceneLabels.end())
+		{
+			if(currentSceneLabels.count(siIt->first))//表明现有场景已有输入照片中的该物体，则比对其数量
+			{
+				if( currentSceneLabels[siIt->first]  < siIt->second )//如果当前场景中某个label数量小于输入场景中该label数量，则加入到推荐列表
+				{
+					if(recommendLabelAndWeight.count(siIt->first))
+					{
+						recommendLabelAndWeight[siIt->first] +=0.3;
+					}
+					else
+					{
+						recommendLabelAndWeight.insert(make_pair(siIt->first,0.3));
+					}
+				}
+			}
+			siIt++;
+		}//while
+
+
+		//******************** 整个场景类别的比对*****************
+		//由于一次推荐的数量有限，所以需要控制数量，当已有推荐label 数目超过一定数量时，则不再启用
+		if(recommendLabelAndWeight.size() <8)
+		{
+			//先读取所有类别场景中的label集合
+			inPath = "SearchResult\\AllSceneLableAndCount.txt";	
+			in.open(inPath);
+			if(!in)
+			{
+				//
+			}
+			//map<string,map<string,in>>sceneLabelAndCount;
+			while(!in.eof())
+			{
+				getline(in,buffer);
+				istringstream line(buffer);
+				line>>tempSceneName>>tempLable>>labelNumb;
+
+				if(sceneLabelAndCount.count(tempSceneName))
+				{
+					if( !sceneLabelAndCount[tempSceneName].count(tempLable))
+					{
+						sceneLabelAndCount[tempSceneName].insert(make_pair(tempLable,labelNumb));
+					}
+				}
+				else
+				{
+					map<string,int>temp;
+					temp.insert(make_pair(tempLable,labelNumb));
+					sceneLabelAndCount.insert(make_pair(tempSceneName,temp));
+				}
+				line.clear();
+				buffer.clear();
+			}
+			in.clear();
+			in.close();
+
+			siIt = sceneLabelAndCount[sceneStyle].begin();
+			while (siIt != sceneLabelAndCount[sceneStyle].end())
+			{
+				if( !recommendLabelAndWeight.count(siIt->first))
+				{
+					recommendLabelAndWeight.insert(make_pair(siIt->first,0.2));
+				}
+				siIt++;
+			}
+		}//if
+
+	//}//if
+	
 }

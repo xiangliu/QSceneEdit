@@ -75,6 +75,7 @@ public:
 	//Byte* mvisible;  // 该模型是否可见
 	vector<Model*> sceneModels; //场景中的模型
 	vector<LightModel> lightSceneModels; //added by liuxiang,轻量级的model，用于3D检索
+	vector<float>modelImportance;  //用于记录物体的重要程度：物体包围盒大小、relationship涵盖物体数、相同label个数
 
 	int** relationTable;  // 关系表单
 	map<string,int> ModelMap; // Tag : Model_index
@@ -103,7 +104,7 @@ public:
 	void LightReadRelationFile(string path); // 轻量级的读取path对应的场景配置文件，用于3D场景检索
 	void BuildRelationTable1(int **relationTable); //added by liuxiang
 	void DrawModelSearchBBox();   //用来往场景中添加用于单个物体检索的立方体
-
+	void CalculateModelImportance();   //用于计算所有模型的重要程度
 	// 辅助操作
 private:
 	// return false,没有找到对应格式处理程序

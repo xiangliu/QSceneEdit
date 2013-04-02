@@ -4,7 +4,9 @@
 /************************************************************************/
 #ifndef QSCENEDISPLAY_H
 #define QSCENEDISPLAY_H
-
+#include <string>
+#include <map>
+#include <set>
 #include <QGLWidget>
 #include <QPoint>
 #include <QMouseEvent>
@@ -50,10 +52,12 @@ public:
 	*/
 	//int state; // 指示当前的状态，是平移还是选择物体
 	enum SceneDisplayState{PrepareState, SceneTranslation, SceneRotation,
-		ObjectTranslation, ObjectRotation, ObjectZoom,InseartObjectCube,SearchSingleModel};
+		ObjectTranslation, ObjectRotation, ObjectZoom,
+		ObjectSelected,/*InseartObjectCube,*/SearchSingleModel};
+
 	SceneDisplayState sceneDisplayState; //用于指示场景当前的状态
 
-	int selectModel;  // 拾取时选中的模型的index，注意区分单个模型检索时的情况
+	int selectModel;  // 拾取时选中的模型的index，注意区分单个模型检索时的情况,如果没有选定则置为-1,(下标是从0开始计算)
 
 	Scene *scene;    //保存显示的场景
 
@@ -61,11 +65,18 @@ public:
 	GLdouble *glModelM; // Model Matrix
 	int *glViewM;   // viewport
 
-	//定义单个模型检索相关的变量
+	//************定义单个模型检索相关的变量***************
+	string sceneStyle;  //用于表示当前场景的类别（bedroom。。。等）
 	int selected3DModel;   //-1代表什么都没有选
 	pObjectMatRes pObjectMatchResult;
+	//vector<string>recommendLabelPath;  //用于保存推荐物体的数据库路径
+	map<string,map<string,int>>sceneLabelAndCount;  //用于保存每个场景类别中所拥有的label集合
+	map<string,int>sourceSceneLabels;  //用户输入场景所包含的场景集合
+	map<string,int>currentSceneLabels;  //检索得到的当前场景所拥有的label集合
+	map<string,map<string,map<int,map<string,map<int,double>>>>> sceneLabelRelevence;  //保存不同场景中不同物体label下的相关度
+	map<string,float> recommendLabelAndWeight; //用于保存当前推荐所有物体的label和权重
 
-	//与单个模型检索结果列表展示相关的变量
+	//**************与单个模型检索结果列表展示相关的变量***************
 	QModelListDialog* modelListDialog;
 
 	// 自定义方法
@@ -90,8 +101,9 @@ protected:
 	void initializeGL();
 	void paintGL();
 	void resizeGL(int width,int height);
-	void ProcessSelection(int xPos,int yPos);
+	int ProcessSelection(int xPos,int yPos); //用于处理用户的拾取，返回值表明用户是否拾取成功
 	void ProcessModels(GLuint *pSelectBuff);
+	void SearchModelsBySelectedLabel(int recommendBasedModel);   //基于用于选定的模型来推荐新的模型
 
 	// 事件处理
 protected:

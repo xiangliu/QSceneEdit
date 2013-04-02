@@ -12,6 +12,13 @@
 #include "ui_mainwindow.h"
 #include "3DFeatureExtract/FeatureExtract.h"
 #include "3DSearch/search.h"
+#include "NaiveBayesClassify/NB.h"
+#include <cstdlib>
+#include <iostream>
+#include <fstream>
+#include <strstream>
+#include <map>
+using namespace std;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -591,8 +598,84 @@ void MainWindow::Search3DScenes()
 			//}
 		}
 
+		//****************对场景进行分类****************
+		//1.得读入所有类别场景的标签集合
+		map<string,int> allLabelAndPosition;
+		ifstream in;
+		int tempInt;
+		int position = 1;
+		string inLine;
+		string label;
+		in.open("MLData\\AllLabelAndCount.txt");
+		if(!in)
+		{
+			//message box
+		}
+		while(! in.eof())
+		{
+			getline(in,inLine);
+			istringstream line(inLine);
+			line>>label>>tempInt;
+			allLabelAndPosition.insert(make_pair(label,position));
+			position++;
+			line.clear();
+		}
+		in.close();
+
+		//2.得将数据类型转换成sparse_feat
+		sparse_feat testData;
+		map<int,int> sceneObjectData;
+
+		for(int i=0; i< this->twdObjectCount; i++)
+		{
+			string tempLabel(objectList[i]->tag.toLocal8Bit());
+			
+			//顺道将数据存到sceneDisplayWidget之中，模型推荐的时候需要使用
+			if(sceneDisplayWidget->sourceSceneLabels.count(tempLabel))
+			{
+				sceneDisplayWidget->sourceSceneLabels[tempLabel]++;
+			}
+			else
+			{
+				sceneDisplayWidget->sourceSceneLabels.insert(make_pair(tempLabel,1));
+			}
+
+			if(allLabelAndPosition.count(tempLabel))//得保证原有库里有这个label
+			{
+				if(sceneObjectData.count(allLabelAndPosition[tempLabel]))
+				{
+					sceneObjectData[allLabelAndPosition[tempLabel]]++;
+				}
+				else
+				{
+					sceneObjectData.insert(make_pair(allLabelAndPosition[tempLabel],1));
+				}
+			}
+			
+		}
+
+		map<int,int>::iterator sceneDataIt = sceneObjectData.begin();
+		while(sceneDataIt != sceneObjectData.end())
+		{
+			testData.id_vec.push_back(sceneDataIt->first);
+			testData.value_vec.push_back(sceneDataIt->second);
+			sceneDataIt++;
+		}
+
+		//3.得通过算法计算分类结果返回
+	
+		string modelSavePath = "F:\\NaiveBayesData\\Mytrain.model";
+		int event_model = 1;
+
+		NB nb;
+		nb.load_model(modelSavePath.c_str());
+		int sceneClass = nb.classify_OneScene(testData,event_model);
+
+		//****************检索3D场景********************
+		int resultSum = 1;
 		////检索
-		int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);
+		//int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);
+		//int resultSum = Search3DSceneFromBufferWithClassify(sceneClass,twdScene,this->relationship,err,pSceneMatResult);
 		//if(!resultSum)
 		//{
 		//	//QMessageBox::warning(this,tr("Scenes Search"),tr("Search failed!"),QMessageBox::Yes);
@@ -717,16 +800,16 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		//create connection
 		connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));
 		connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
-		connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+		//connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
 		
 		//1.获取场景,如果失败则用message提示
 		string temp1 = string(this->pSceneMatResult[this->selcted3DScene].name)+".obj";
 		//if(OpenSceneOfSearch(this->pSceneMatResult[this->selcted3DScene].name) )
-		//if(OpenSceneOfSearch( temp1.c_str()) )
-		//{
-		//	QMessageBox::warning(this,tr("Scenes Loading"),tr("Scene Laod failed!"),QMessageBox::Yes);
-		//	return;
-		//}
+		if(OpenSceneOfSearch( temp1.c_str()) )
+		{
+			QMessageBox::warning(this,tr("Scenes Loading"),tr("Scene Laod failed!"),QMessageBox::Yes);
+			return;
+		}
 		OpenSceneOfSearch( temp1.c_str());
 
 		//准备显示场景的widget

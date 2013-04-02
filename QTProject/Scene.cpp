@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "trimesh/vec.h"
 
 Scene::Scene(QObject* parent) :QObject(parent)
 {
@@ -1030,6 +1031,65 @@ void Scene::DrawModelSearchBBox()
 	Model *newInsertModel = new Model;
 	newInsertModel->bbox = objectSearchBBox;
 	this->sceneModels.push_back(newInsertModel);//此时scene的modelsize不能增加，因为还没有真正插入model
+
+}
+
+//用于计算场景内所有模型的重要程度
+void Scene::CalculateModelImportance()
+{
+	//***********1.计算模型的大小*************
+	//计算模型对角线长度的大小
+	float maxLength = 0.0;  //用来临时保存最长对角线，方便最后进行归一化
+	for(int i =0; i< modelSize ; i++)
+	{
+		if( !sceneModels[i]->bbox.valid)
+		{
+			sceneModels[i]->need_bbox(); //算包围盒
+		}
+		point temp = sceneModels[i]->bbox.size();
+		float temp1 = temp[0]*temp[0]+ temp[1]*temp[1]+ temp[2]*temp[3];
+		modelImportance[i] = temp1;
+		if(temp1 > maxLength)
+		{
+			maxLength = temp1;
+		}
+	}
+	//对模型对角线长度平方进行归一化
+	for(int i =0; i< modelSize ; i++)
+	{
+		modelImportance[i]/=maxLength;
+	}
+
+	//2.统计场景中每个model拥有的relationship相关model个数
+	BuildRelationTable();//简历relationship的关系矩阵
+	int relationSize;
+	int maxRelationSize = 0; 
+	vector<int>allLabelRelationSize;
+	for(int i=0; i<modelSize; i++)
+	{
+		relationSize = 0;
+		for (int j =0; j<modelSize; j++)
+		{
+			if(relationTable[i][j]!=0 && relationTable[i][j]!=6) //不是无关系或者同一关系
+			{
+				relationSize++;
+			}
+		}
+		allLabelRelationSize.push_back(relationSize);
+		if(relationSize > maxRelationSize)
+		{
+			maxRelationSize = relationSize;
+		}
+	}
+
+	//对relation size 进行归一化,同时并入到importance之中
+	if(maxRelationSize >0)
+	{
+		for (int i =0; i< modelSize ; i++)
+		{
+			modelImportance[i]+= (float)allLabelRelationSize[i]/(float)maxRelationSize;
+		}
+	}
 
 }
 

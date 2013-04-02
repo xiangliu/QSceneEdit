@@ -103,7 +103,8 @@ public:
 
 	//保存用户挑选的模型,-1表示未挑选任何模型
 	int selectedModle;
-	pObjectMatRes pObjectMatchResult; //用于保存检索到的所有模型的filepath，此处仅仅为指针，内存在QSceneDisplay开辟，由mainwindow释放
+	//pObjectMatRes pObjectMatchResult; //用于保存检索到的所有模型的filepath，此处仅仅为指针，内存在QSceneDisplay开辟，由mainwindow释放
+	vector<string> objectFilePaht; //用于保存推荐物体的路径
 	int modelImageWidth;
 	int modelImageHeight;  //用于表示最终显示结果中模型图片的大小
 
