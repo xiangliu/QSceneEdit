@@ -3,7 +3,7 @@
 QModelListDialog::QModelListDialog(QWidget *parent) :
 QDialog(parent)
 {
-	pObjectMatchResult = NULL;
+	//pObjectMatchResult = NULL;
 	selectedModle = -1;
 
 	imageLable1 = new QLabel;
@@ -57,33 +57,56 @@ QModelListDialog::~QModelListDialog()
 //用于载入检索结果列表
 void QModelListDialog::DownloadModelImage(int windWidth, int windHeight)
 {
-	if(pObjectMatchResult != NULL)
+	if(objectFilepath.size() > 0)
 	{
 		//将所有的image都设定成固定大小
 		this->modelImageWidth = (int)(windWidth/6);
 		this->modelImageHeight = (int)(windHeight/3);
 
-		string t1 = string(pObjectMatchResult[0].name) + ".jpg";
-		string t2 = string(pObjectMatchResult[1].name) + ".jpg";
-		string t3 = string(pObjectMatchResult[2].name) + ".jpg";
-		string t4 = string(pObjectMatchResult[3].name) + ".jpg";
-		string t5 = string(pObjectMatchResult[4].name) + ".jpg";
-		string t6 = string(pObjectMatchResult[5].name) + ".jpg";
-		string t7 = string(pObjectMatchResult[6].name) + ".jpg";
-		string t8 = string(pObjectMatchResult[7].name) + ".jpg";
-		string t9 = string(pObjectMatchResult[8].name) + ".jpg";
-		string t10 = string(pObjectMatchResult[9].name) + ".jpg";
-		string t11 = string(pObjectMatchResult[10].name) + ".jpg";
-		string t12 = string(pObjectMatchResult[11].name) + ".jpg";
-		string t13 = string(pObjectMatchResult[12].name) + ".jpg";
-		string t14 = string(pObjectMatchResult[13].name) + ".jpg";
-		string t15 = string(pObjectMatchResult[14].name) + ".jpg";
-		string t16 = string(pObjectMatchResult[15].name) + ".jpg";
-		string t17 = string(pObjectMatchResult[16].name) + ".jpg";
-		string t18 = string(pObjectMatchResult[17].name) + ".jpg";
+		//string t1 = string(pObjectMatchResult[0].name) + ".jpg";
+		//string t2 = string(pObjectMatchResult[1].name) + ".jpg";
+		//string t3 = string(pObjectMatchResult[2].name) + ".jpg";
+		//string t4 = string(pObjectMatchResult[3].name) + ".jpg";
+		//string t5 = string(pObjectMatchResult[4].name) + ".jpg";
+		//string t6 = string(pObjectMatchResult[5].name) + ".jpg";
+		//string t7 = string(pObjectMatchResult[6].name) + ".jpg";
+		//string t8 = string(pObjectMatchResult[7].name) + ".jpg";
+		//string t9 = string(pObjectMatchResult[8].name) + ".jpg";
+		//string t10 = string(pObjectMatchResult[9].name) + ".jpg";
+		//string t11 = string(pObjectMatchResult[10].name) + ".jpg";
+		//string t12 = string(pObjectMatchResult[11].name) + ".jpg";
+		//string t13 = string(pObjectMatchResult[12].name) + ".jpg";
+		//string t14 = string(pObjectMatchResult[13].name) + ".jpg";
+		//string t15 = string(pObjectMatchResult[14].name) + ".jpg";
+		//string t16 = string(pObjectMatchResult[15].name) + ".jpg";
+		//string t17 = string(pObjectMatchResult[16].name) + ".jpg";
+		//string t18 = string(pObjectMatchResult[17].name) + ".jpg";
+
+		string t1 = objectFilepath[0] + ".jpg";
+		string t2 = objectFilepath[1] + ".jpg";
+		string t3 = objectFilepath[2] + ".jpg";
+		string t4 = objectFilepath[3] + ".jpg";
+		string t5 = objectFilepath[4] + ".jpg";
+		string t6 = objectFilepath[5] + ".jpg";
+		string t7 = objectFilepath[6] + ".jpg";
+		string t8 = objectFilepath[7] + ".jpg";
+		string t9 = objectFilepath[8] + ".jpg";
+		string t10 = objectFilepath[9] + ".jpg";
+		string t11 = objectFilepath[10] + ".jpg";
+		string t12 = objectFilepath[11] + ".jpg";
+		string t13 = objectFilepath[12] + ".jpg";
+		string t14 = objectFilepath[13] + ".jpg";
+		string t15 = objectFilepath[14] + ".jpg";
+		string t16 = objectFilepath[15] + ".jpg";
+		string t17 = objectFilepath[16] + ".jpg";
+		string t18 = objectFilepath[17] + ".jpg";
 
 		//为8个label download image(未检查image load 是否成功)
-		image1.load(t1.c_str());
+		int i ;
+		if( !image1.load(t1.c_str()))
+		{
+            i = 0;
+		}
 		image2.load(t2.c_str());
 		image3.load(t3.c_str());
 		image4.load(t4.c_str());

@@ -31,6 +31,7 @@ public:
 
 	// 自定义属性
 public:
+	//typedef pair<string, float> PAIR;  
 	float xangle; //累计角度值
 	float yangle; // 累计角度值
 	float scale;
@@ -103,8 +104,8 @@ protected:
 	void resizeGL(int width,int height);
 	int ProcessSelection(int xPos,int yPos); //用于处理用户的拾取，返回值表明用户是否拾取成功
 	void ProcessModels(GLuint *pSelectBuff);
-	void SearchModelsBySelectedLabel(int recommendBasedModel);   //基于用于选定的模型来推荐新的模型
-
+	void recommendModelsBySelectedLabel(int recommendBasedModel);   //基于用于选定的模型来推荐新的模型
+	//bool importanceCmp(PAIR& x,PAIR& y); //用于排序的比较函数
 	// 事件处理
 protected:
     void mouseMoveEvent(QMouseEvent *event);

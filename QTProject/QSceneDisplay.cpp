@@ -425,15 +425,12 @@ void QSceneDisplay::pickupCubeAction()
 	*/
 }
 
-//bool sortRecommendModel(map<>)
-//{
-//
-//}
-typedef pair<string, float> PAIR;  
-int importanceCmp(const PAIR& x, const PAIR& y)  
-{  
-	return x.second > y.second;  
-}  
+//typedef pair<string, float> PAIR;  
+//bool QSceneDisplay::importanceCmp(PAIR& x,PAIR& y)  
+//{  
+//	return x.second > y.second;  
+//}  
+
 
 //用来响应菜单的单个模型检索功能
 //该函数必须根据插入的检索框位置，通过检索算法查找到相应的模型列表，随后将模型列表传递给QModelListDialog，让其显示
@@ -441,25 +438,22 @@ int importanceCmp(const PAIR& x, const PAIR& y)
 //如果当前用户未选择人物物体，则使用第一种检索策略,根据物体重要程度来确定推荐的baseModel
 void QSceneDisplay::searchInseartObject()  
 {
-	//状态转换
-	this->sceneDisplayState = SearchSingleModel;
-
 	//创建dialog对话框
 	modelListDialog = new QModelListDialog;
 	//第二种检索策略
 	if(this->sceneDisplayState == ObjectSelected)
 	{
 		 //计算检索列表
-		 this->SearchModelsBySelectedLabel(this->selectModel);
+		 this->recommendModelsBySelectedLabel(this->selectModel);
 	}
 	//第一种检索策略
 	else 
 	{
 		 int maxImportantModel = 0;
-		 float maxImportant = scene->modelImportance[0];
-         for (int i = 1; i< scene->modelSize ; i++)
+		 float maxImportant = -1;
+         for (int i = 0; i< scene->modelSize ; i++)
          {
-			if( scene->modelImportance[i] >maxImportant)
+			if( scene->modelImportance[i] >maxImportant && scene->sceneModels[i]->tag!="Wall"&& scene->sceneModels[i]->tag!="Wall1" && scene->sceneModels[i]->tag!="Wall2")
 			{
 				maxImportantModel = i;
 				maxImportant = scene->modelImportance[i];
@@ -467,20 +461,56 @@ void QSceneDisplay::searchInseartObject()
          }
 
 		 //计算检索列表
-		 this->SearchModelsBySelectedLabel(maxImportantModel);
+		 this->recommendModelsBySelectedLabel(maxImportantModel);
 	}
 
 	//构造推荐列表的数据,先给推荐列表排序，再选3,3,2,2,2,1,1,1,1,1,1一共11类label进行推荐，如果不够，随机推荐
-	sort(recommendLabelAndWeight.begin(),recommendLabelAndWeight.end(),importanceCmp);
+	map<string,float>::iterator recoIt = recommendLabelAndWeight.begin();
+	map<float,string>tempRecommend;
+	while(recoIt!= recommendLabelAndWeight.end())
+	{
+		if(tempRecommend.count(recoIt->second))
+		{
+			recoIt->second += 0.00001;
+		}
+		else
+		{
+	        tempRecommend.insert(make_pair(recoIt->second,recoIt->first));
+			recoIt++;
+		}
+	}
 
+	string toLowerCase;
+	map<float,string>::iterator recoIt1 = tempRecommend.begin();
+	if(tempRecommend.size() >= 18)
+	{
+
+		for(int i = 0; i<18; i++)
+		{
+			toLowerCase = recoIt1->second;
+			transform(toLowerCase.begin(),toLowerCase.end(),toLowerCase.begin(),tolower);
+			//modelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+recoIt1->second+"\\"+recoIt1->second+"1");
+			modelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+toLowerCase+"\\"+toLowerCase+"1"+"\\"+toLowerCase+"1");
+			recoIt1++;
+		}
+		
+	}
+	//else
+	//{
+
+	//}
+
+	//状态转换
+	this->sceneDisplayState = SearchSingleModel;
 
 	//传递检索数据给modelListDialog，并显示
-	modelListDialog->pObjectMatchResult =this->pObjectMatchResult;
+	//modelListDialog->pObjectMatchResult =this->pObjectMatchResult;
 	connect(modelListDialog,SIGNAL(Inseart3DModel(int)),this,SLOT(Inseart3DModel(int)));
 	int modelListDialogWidth = this->width()*0.75;
 	int modelListDialogHeight = this->height()*0.75;
 	modelListDialog->DownloadModelImage(modelListDialogWidth,modelListDialogHeight);
 	modelListDialog->show();
+	
 }
 
 
@@ -516,8 +546,9 @@ void QSceneDisplay::Inseart3DModel(int selectedModel)
 5.返回推荐label集合
 */
 /************************************************************************/
-void QSceneDisplay::SearchModelsBySelectedLabel(int recommendBasedModel)
+void QSceneDisplay::recommendModelsBySelectedLabel(int recommendBasedModel)
 {
+	
 	//*********** 1. 读取每类场景中的所有标签*********
 	string buffer;
 	string tempSceneName,tempLable;
@@ -528,16 +559,16 @@ void QSceneDisplay::SearchModelsBySelectedLabel(int recommendBasedModel)
 	//********** 2.存储当前场景label集合 和输入场景label集合*************
 	for(int i=0; i< scene->modelSize; i++)
 	{
-		if(currentSceneLabels.count(scene->lightSceneModels[i].modelTag))
+		if(currentSceneLabels.count(scene->sceneModels[i]->tag))
 		{
-			currentSceneLabels[scene->lightSceneModels[i].modelTag]++;
+			currentSceneLabels[scene->sceneModels[i]->tag]++;
 		}
 		else
 		{
-			currentSceneLabels.insert(make_pair(scene->lightSceneModels[i].modelTag,1));
+			currentSceneLabels.insert(make_pair(scene->sceneModels[i]->tag,1));
 		}
 	}
-
+	
 	//****************** 3.读取不同场景下不同label的relevence label ***************************
 	string tempLabel1;
 	int labelId,labelId1;
@@ -563,7 +594,7 @@ void QSceneDisplay::SearchModelsBySelectedLabel(int recommendBasedModel)
 				{
 					if(sceneLabelRelevence[tempSceneName][tempLable][labelId].count(tempLabel1))
 					{
-                          sceneLabelRelevence[tempSceneName][tempLable][labelId][tempLabel1].insert(make_pair(labelId1,relevence));
+						sceneLabelRelevence[tempSceneName][tempLable][labelId][tempLabel1].insert(make_pair(labelId1,relevence));
 					}
 					else
 					{
@@ -578,7 +609,7 @@ void QSceneDisplay::SearchModelsBySelectedLabel(int recommendBasedModel)
 					map<string,map<int,double>>temp1;
 					temp.insert(make_pair(labelId1,relevence));
 					temp1.insert(make_pair(tempLabel1,temp));
-					sceneLabelRelevence[tempSceneName][tempLable].insert(make_pair(tempLable,temp1));
+					sceneLabelRelevence[tempSceneName][tempLable].insert(make_pair(labelId,temp1));
 				}
 			}
 			else
@@ -588,7 +619,7 @@ void QSceneDisplay::SearchModelsBySelectedLabel(int recommendBasedModel)
 				map<int,map<string,map<int,double>>>temp2;
 				temp.insert(make_pair(labelId1,relevence));
 				temp1.insert(make_pair(tempLabel1,temp));
-				temp2.insert(make_pair(labelId,temp2));
+				temp2.insert(make_pair(labelId,temp1));
 				sceneLabelRelevence[tempSceneName].insert(make_pair(tempLable,temp2));
 			}
 		}
@@ -600,7 +631,7 @@ void QSceneDisplay::SearchModelsBySelectedLabel(int recommendBasedModel)
 			map<string,map<int,map<string,map<int,double>>>>temp3;
 			temp.insert(make_pair(labelId1,relevence));
 			temp1.insert(make_pair(tempLabel1,temp));
-			temp2.insert(make_pair(labelId,temp2));
+			temp2.insert(make_pair(labelId,temp1));
 			temp3.insert(make_pair(tempLable,temp2));
 			sceneLabelRelevence.insert(make_pair(tempSceneName,temp3));
 		}
@@ -610,7 +641,7 @@ void QSceneDisplay::SearchModelsBySelectedLabel(int recommendBasedModel)
 	in.clear();
 	in.close();
 
-
+	
 	//******************* 4.计算推荐label****************
 	//map<string,float> recommendLabelAndWeight; 
 	//map<string,map<string,map<int,map<string,map<int,double>>>>> sceneLabelRelevence;  //保存不同场景中不同物体label下的相关度
@@ -675,10 +706,10 @@ void QSceneDisplay::SearchModelsBySelectedLabel(int recommendBasedModel)
 
 		//******************** 整个场景类别的比对*****************
 		//由于一次推荐的数量有限，所以需要控制数量，当已有推荐label 数目超过一定数量时，则不再启用
-		if(recommendLabelAndWeight.size() <8)
+		if(recommendLabelAndWeight.size() <18)
 		{
 			//先读取所有类别场景中的label集合
-			inPath = "SearchResult\\AllSceneLableAndCount.txt";	
+			inPath = "MLData\\AllSceneLableAndCount.txt";	
 			in.open(inPath);
 			if(!in)
 			{

@@ -2796,6 +2796,44 @@ int Search3DSceneFromBufferWithClassify(int sceneCategory,TwoDScene twds,int **T
 	}
 	sort(twdSceneHelp.begin(),twdSceneHelp.end(),compareTwoSearchHelp);  //升序排序
 
+	//计算2D场景中相同tag的模型的个数
+	temp1 = 1;
+	while (temp1< twds.modelNum)
+	{
+		if(twdSceneHelp[temp1].modelTag ==twdSceneHelp[temp1-1].modelTag)
+		{
+			//如果与前一个tag相同，则数目增1
+			twdSceneHelp[temp1].sameTageCount = twdSceneHelp[temp1-1].sameTageCount +1;
+		}
+		else
+		{
+			//逆序去给每个模型都赋值相同tag个数
+			//int tempCount =  twdSceneHelp[tempI-1].sameTageCount -1; // 
+			int tempIndex = temp1-2;
+
+			while( tempIndex>=0 && twdSceneHelp[temp1-1].modelTag == twdSceneHelp[tempIndex].modelTag)
+			{
+				twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[temp1-1].sameTageCount;
+				//tempCount --;
+				tempIndex--;
+			}				
+		}
+
+		if(temp1 ==(twds.modelNum -1) && twdSceneHelp[temp1].sameTageCount>1)
+		{
+			//逆序去给每个模型都赋值相同tag个数
+			//int tempCount =  twdSceneHelp[tempI].sameTageCount -1; // 
+			int tempIndex = temp1-1;
+			while(twdSceneHelp[temp1].modelTag == twdSceneHelp[tempIndex].modelTag)
+			{
+				twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[temp1].sameTageCount;
+				//tempCount --;
+				tempIndex--;
+			}
+		}
+		temp1++;
+	}
+
 	//**************读取新的3D场景中所有场景的描述子并进行匹配***************************/
 	//具体顺序：
 	//1.读取场景库中场景列表,其中场景列表保存在NewSceneModelList.txt（对于后续分类型的检索可以分文件夹检索）
@@ -2806,25 +2844,27 @@ int Search3DSceneFromBufferWithClassify(int sceneCategory,TwoDScene twds,int **T
 	//6.结束
 
 	//第一步：打开场景列表
-	//switch(sceneCategory)
-	//{
-	//case 1:
-	//	fpt = fopen("SearchConfigure\\bedroomSceneList.txt", "r");
-	//	break;
-	//case 2:
-	//	fpt = fopen("SearchConfigure\\conferenceroomSceneList.txt", "r");
-	//	break;
-	//case 3:
-	//	fpt = fopen("SearchConfigure\\diningroomSceneList.txt", "r");
-	//	break;
-	//case 4:
-	//	fpt = fopen("SearchConfigure\\kitchenSceneList.txt", "r");
-	//	break;
-	//default:
-	//	fpt = fopen("SearchConfigure\\livingroomSceneList.txt", "r");
-	//	break;
-	//}
-	fpt = fopen("SearchConfigure\\NewSceneModelList.txt", "r");
+	switch(sceneCategory)
+	{
+	case 1:
+		fpt = fopen("SearchConfigure\\bedroomSceneList.txt", "r");
+		break;
+	case 2:
+		fpt = fopen("SearchConfigure\\conferenceroomSceneList.txt", "r");
+		break;
+	case 3:
+		fpt = fopen("SearchConfigure\\diningroomSceneList.txt", "r");
+		break;
+	case 4:
+		fpt = fopen("SearchConfigure\\kitchenSceneList.txt", "r");
+		break;
+	default:
+		fpt = fopen("SearchConfigure\\livingroomSceneList.txt", "r");
+		break;
+	}
+
+	//fpt = fopen("SearchConfigure\\NewSceneModelList.txt", "r");
+
 	if(fpt == NULL)
 	{
 		sprintf(err,"Can't open file : NewSceneModelList.txt! \n");
@@ -2922,41 +2962,42 @@ int Search3DSceneFromBufferWithClassify(int sceneCategory,TwoDScene twds,int **T
 		}
 
 		//分别计算2D和3D场景中相同tag的模型的个数
-		tempI = 1;
-		while (tempI< twds.modelNum)
-		{
-			if(twdSceneHelp[tempI].modelTag ==twdSceneHelp[tempI-1].modelTag)
-			{
-				//如果与前一个tag相同，则数目增1
-				twdSceneHelp[tempI].sameTageCount = twdSceneHelp[tempI-1].sameTageCount +1;
-			}
-			else
-			{
-				//逆序去给每个模型都赋值相同tag个数
-				int tempCount =  twdSceneHelp[tempI-1].sameTageCount -1; // 
-				int tempIndex = tempI-2;
-				while(tempCount > 0)
-				{
-					twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[tempI-1].sameTageCount;
-					tempCount --;
-					tempIndex--;
-				}
-			}
+		//tempI = 1;
+		//while (tempI< twds.modelNum)
+		//{
+		//	if(twdSceneHelp[tempI].modelTag ==twdSceneHelp[tempI-1].modelTag)
+		//	{
+		//		//如果与前一个tag相同，则数目增1
+		//		twdSceneHelp[tempI].sameTageCount = twdSceneHelp[tempI-1].sameTageCount +1;
+		//	}
+		//	else
+		//	{
+		//		//逆序去给每个模型都赋值相同tag个数
+		//		//int tempCount =  twdSceneHelp[tempI-1].sameTageCount -1; // 
+		//		int tempIndex = tempI-2;
 
-			if(tempI ==(twds.modelNum -1) && twdSceneHelp[tempI].sameTageCount>1)
-			{
-				//逆序去给每个模型都赋值相同tag个数
-				int tempCount =  twdSceneHelp[tempI].sameTageCount -1; // 
-				int tempIndex = tempI-1;
-				while(tempCount > 0)
-				{
-					twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[tempI].sameTageCount;
-					tempCount --;
-					tempIndex--;
-				}
-			}
-			tempI++;
-		}
+		//		while( tempIndex>=0 && twdSceneHelp[tempI-1].modelTag == twdSceneHelp[tempIndex].modelTag)
+		//		{
+		//			twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[tempI-1].sameTageCount;
+		//			//tempCount --;
+		//			tempIndex--;
+		//		}				
+		//	}
+
+		//	if(tempI ==(twds.modelNum -1) && twdSceneHelp[tempI].sameTageCount>1)
+		//	{
+		//		//逆序去给每个模型都赋值相同tag个数
+		//		//int tempCount =  twdSceneHelp[tempI].sameTageCount -1; // 
+		//		int tempIndex = tempI-1;
+		//		while(twdSceneHelp[tempI].modelTag == twdSceneHelp[tempIndex].modelTag)
+		//		{
+		//			twdSceneHelp[tempIndex].sameTageCount = twdSceneHelp[tempI].sameTageCount;
+		//			//tempCount --;
+		//			tempIndex--;
+		//		}
+		//	}
+		//	tempI++;
+		//}
 
 		tempI = 1;
 		while (tempI< tempScene.modelSize)
@@ -2969,25 +3010,28 @@ int Search3DSceneFromBufferWithClassify(int sceneCategory,TwoDScene twds,int **T
 			else
 			{
 				//逆序去给每个模型都赋值相同tag个数
-				int tempCount =  threedSceneHelp[tempI-1].sameTageCount -1; // 
+				//int tempCount =  threedSceneHelp[tempI-1].sameTageCount -1; // 
 				int tempIndex = tempI-2;
-				while(tempCount > 0)
+
+				while(tempIndex>= 0 && threedSceneHelp[tempIndex].modelTag ==threedSceneHelp[tempI-1].modelTag)
 				{
 					threedSceneHelp[tempIndex].sameTageCount = threedSceneHelp[tempI-1].sameTageCount;
-					tempCount --;
+					//tempCount --;
 					tempIndex--;
 				}
+
+				
 			}
 
 			if(tempI ==(tempScene.modelSize -1) && threedSceneHelp[tempI].sameTageCount>1)
 			{
 				//逆序去给每个模型都赋值相同tag个数
-				int tempCount =  threedSceneHelp[tempI].sameTageCount -1; // 
+				//int tempCount =  threedSceneHelp[tempI].sameTageCount -1; // 
 				int tempIndex = tempI-1;
-				while(tempCount > 0)
+				while(threedSceneHelp[tempIndex].modelTag ==threedSceneHelp[tempI].modelTag)
 				{
 					threedSceneHelp[tempIndex].sameTageCount = threedSceneHelp[tempI].sameTageCount;
-					tempCount --;
+					//tempCount --;
 					tempIndex--;
 				}
 			}

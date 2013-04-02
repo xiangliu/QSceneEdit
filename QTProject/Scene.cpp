@@ -605,9 +605,12 @@ void Scene::BuildRelationTable()
 {
 	relationTable=new int*[modelSize];
 	for (int i=0;i<modelSize;i++)
+	{
 		relationTable[i]=new int[modelSize];
+		memset(relationTable[i],0,modelSize*sizeof(int));
+	}
 
-	memset(relationTable,0,modelSize*modelSize*4);
+	//memset(relationTable,0,modelSize*modelSize*4);
 	map<string,vector<int>>::iterator it;
 	for (it=RelationMap.begin();it!=RelationMap.end();it++)
 	{
@@ -1048,7 +1051,8 @@ void Scene::CalculateModelImportance()
 		}
 		point temp = sceneModels[i]->bbox.size();
 		float temp1 = temp[0]*temp[0]+ temp[1]*temp[1]+ temp[2]*temp[3];
-		modelImportance[i] = temp1;
+		this->modelImportance.push_back(temp1);
+		//modelImportance[i] = temp1;
 		if(temp1 > maxLength)
 		{
 			maxLength = temp1;
@@ -1061,7 +1065,7 @@ void Scene::CalculateModelImportance()
 	}
 
 	//2.统计场景中每个model拥有的relationship相关model个数
-	BuildRelationTable();//简历relationship的关系矩阵
+	BuildRelationTable();//建立relationship的关系矩阵
 	int relationSize;
 	int maxRelationSize = 0; 
 	vector<int>allLabelRelationSize;

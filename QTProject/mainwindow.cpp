@@ -118,6 +118,8 @@ bool MainWindow::OpenSceneOfSearch(const char *threeDSceneFilePath)
 	    return false;
 	}
 
+	scene->CalculateModelImportance();
+
 	//CreateRelationItem();
 
 	// 发送显示3D场景的signal
@@ -606,10 +608,12 @@ void MainWindow::Search3DScenes()
 		int position = 1;
 		string inLine;
 		string label;
-		in.open("MLData\\AllLabelAndCount.txt");
+		in.open("MLData\\AllLableAndCount.txt");
 		if(!in)
 		{
 			//message box
+			QMessageBox::warning(this,tr("ML"),tr("AllLabelAndCount failed:"),QMessageBox::Yes);
+			return;
 		}
 		while(! in.eof())
 		{
@@ -664,17 +668,35 @@ void MainWindow::Search3DScenes()
 
 		//3.得通过算法计算分类结果返回
 	
-		string modelSavePath = "F:\\NaiveBayesData\\Mytrain.model";
+		string modelSavePath = "NaiveBayesData\\Mytrain.model";
 		int event_model = 1;
 
 		NB nb;
 		nb.load_model(modelSavePath.c_str());
 		int sceneClass = nb.classify_OneScene(testData,event_model);
-
+		switch(sceneClass)
+		{
+		    case 1:
+				sceneDisplayWidget->sceneStyle = "bedroom";
+				break;
+			case 2:
+				sceneDisplayWidget->sceneStyle = "conferenceroom";
+				break;
+			case 3:
+				sceneDisplayWidget->sceneStyle = "diningroom";
+				break;
+			case 4:
+				sceneDisplayWidget->sceneStyle = "kitchen";
+				break;
+			default:
+				sceneDisplayWidget->sceneStyle = "livingroom";
+				break;
+		}
+		
 		//****************检索3D场景********************
-		int resultSum = 1;
+		int resultSum = 8;
 		////检索
-		//int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);
+		//(int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);)//原有不是用calssify的方法
 		//int resultSum = Search3DSceneFromBufferWithClassify(sceneClass,twdScene,this->relationship,err,pSceneMatResult);
 		//if(!resultSum)
 		//{
@@ -805,12 +827,12 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		//1.获取场景,如果失败则用message提示
 		string temp1 = string(this->pSceneMatResult[this->selcted3DScene].name)+".obj";
 		//if(OpenSceneOfSearch(this->pSceneMatResult[this->selcted3DScene].name) )
-		if(OpenSceneOfSearch( temp1.c_str()) )
+		if(!OpenSceneOfSearch( temp1.c_str()) )
 		{
 			QMessageBox::warning(this,tr("Scenes Loading"),tr("Scene Laod failed!"),QMessageBox::Yes);
 			return;
 		}
-		OpenSceneOfSearch( temp1.c_str());
+		//OpenSceneOfSearch( temp1.c_str());
 
 		//准备显示场景的widget
 		sceneDisplayWidget->resize(ui->centralWidget->width(),ui->centralWidget->height());

@@ -20,14 +20,14 @@
 #define MODELSEARCHRESULTNUMBER 18
 
 //用来定义检索后保留的最相似的场景个数
-#define SCENEFORDISPLAY 30
+#define SCENEFORDISPLAY 40
 
 #define BUFSIZE 512
 
 #define SIM_SQUARE(x) ((x)*(x))
 
 //定义一个场景最大的分割数
-#define MAXSEGMENTNUMBER 50
+#define MAXSEGMENTNUMBER 80
 
 //****************************added by liuxiang
 
