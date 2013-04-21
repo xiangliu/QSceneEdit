@@ -2,8 +2,10 @@
 #include "MeanShift.h"
 
 // 全局变量
- int spatial_radius = 10;
- double color_radius = 6.5;
+int spatial_radius = 10;
+double color_radius = 6.5;
+//int spatial_radius = 16;
+//double color_radius = 8;
 
 RAList::RAList( void )
 {

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <strstream>
 using namespace std;
 
 #define BUFFER_LENGTH 64
@@ -423,6 +424,29 @@ void QSceneDisplay::pickupCubeAction()
 		this->DrawScene();
 	}
 	*/
+
+	//string toLowerCase;
+	sameModelListDialog = new QSameModelListDialog;
+	strstream ss;
+	string temp;
+	//更换模型类别必须在选定某个模型之后进行
+	if(this->sceneDisplayState == ObjectSelected)
+	{
+		string selectedLabel = scene->sceneModels[this->selectModel]->tag; 
+		transform(selectedLabel.begin(),selectedLabel.end(),selectedLabel.begin(),tolower);
+		for(int i = 1; i<19; i++)
+		{
+			ss<<i;
+			ss>>temp;
+			sameModelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+selectedLabel+"\\"+selectedLabel+temp+"\\"+selectedLabel+temp);
+			ss.clear();
+		}
+
+		int modelListDialogWidth = this->width()*0.75;
+		int modelListDialogHeight = this->height()*0.75;
+		sameModelListDialog->DownloadModelImage(modelListDialogWidth,modelListDialogHeight);
+		sameModelListDialog->show();
+	}
 }
 
 //typedef pair<string, float> PAIR;  
@@ -444,7 +468,7 @@ void QSceneDisplay::searchInseartObject()
 	if(this->sceneDisplayState == ObjectSelected)
 	{
 		 //计算检索列表
-		 this->recommendModelsBySelectedLabel(this->selectModel);
+		 this->recommendModelsBySelectedLabel2(this->selectModel);
 	}
 	//第一种检索策略
 	else 
@@ -461,12 +485,16 @@ void QSceneDisplay::searchInseartObject()
          }
 
 		 //计算检索列表
-		 this->recommendModelsBySelectedLabel(maxImportantModel);
+		 this->recommendModelsBySelectedLabel2(maxImportantModel);
 	}
 
+	//测试使用
+	ofstream out;
+	string outPutpath = "SearchResult\\RecommendLabelResult1.txt";
+	out.open(outPutpath);
 	//构造推荐列表的数据,先给推荐列表排序，再选3,3,2,2,2,1,1,1,1,1,1一共11类label进行推荐，如果不够，随机推荐
-	map<string,float>::iterator recoIt = recommendLabelAndWeight.begin();
-	map<float,string>tempRecommend;
+	map<string,double>::iterator recoIt = recommendLabelAndWeight.begin();
+	map<double,string>tempRecommend;
 	while(recoIt!= recommendLabelAndWeight.end())
 	{
 		if(tempRecommend.count(recoIt->second))
@@ -481,13 +509,14 @@ void QSceneDisplay::searchInseartObject()
 	}
 
 	string toLowerCase;
-	map<float,string>::iterator recoIt1 = tempRecommend.begin();
+	map<double,string>::iterator recoIt1 = tempRecommend.begin();
 	if(tempRecommend.size() >= 18)
 	{
 
 		for(int i = 0; i<18; i++)
 		{
 			toLowerCase = recoIt1->second;
+			out<<toLowerCase<<endl;
 			transform(toLowerCase.begin(),toLowerCase.end(),toLowerCase.begin(),tolower);
 			//modelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+recoIt1->second+"\\"+recoIt1->second+"1");
 			modelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+toLowerCase+"\\"+toLowerCase+"1"+"\\"+toLowerCase+"1");
@@ -495,10 +524,8 @@ void QSceneDisplay::searchInseartObject()
 		}
 		
 	}
-	//else
-	//{
 
-	//}
+	out.close();
 
 	//状态转换
 	this->sceneDisplayState = SearchSingleModel;
@@ -753,5 +780,313 @@ void QSceneDisplay::recommendModelsBySelectedLabel(int recommendBasedModel)
 		}//if
 
 	//}//if
+	
+}
+
+
+/************************************************************************/
+/*/第二版本的模型推荐算法
+//基于用于选定的模型来推荐新的模型
+//实现方案：1.读取不同场景类别下的所有标签集合
+2.存储当前场景label集合 和输入场景label集合
+3.读取不同场景下不同label的relevence label
+4.按照既有方案计算推荐label集合
+5.返回推荐label集合
+*/
+/************************************************************************/
+void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
+{
+	
+	//*********** 1. 读取每类场景中的所有标签*********
+	string buffer;
+	string tempSceneName,tempLable;
+	int labelNumb;
+	string inPath;
+	ifstream in;
+
+	//********** 2.存储当前场景label集合 和输入场景label集合<已经由mainwindow传递过来>*************
+	for(int i=0; i< scene->modelSize; i++)
+	{
+		if(currentSceneLabels.count(scene->sceneModels[i]->tag))
+		{
+			currentSceneLabels[scene->sceneModels[i]->tag]++;
+		}
+		else
+		{
+			currentSceneLabels.insert(make_pair(scene->sceneModels[i]->tag,1));
+		}
+	}
+	
+
+	//****************** 3.读取不同场景下不同label的relevence label ***************************
+	string tempLabel1;
+	int labelId,labelId1;
+	double relevence;
+	inPath = "SearchResult\\LabelRelevencePMI.txt";
+	in.open(inPath);
+	if(!in)
+	{
+		//
+	}
+
+	while(!in.eof())
+	{
+		getline(in,buffer);
+		istringstream line(buffer);
+		line>>tempSceneName>>tempLable>>labelId>>tempLabel1>>labelId1>>relevence;
+		//map<string,map<string,map<int,map<string,map<int,double>>>>> sceneLabelRelevence;  //保存不同场景中不同物体label下的相关度
+		if(sceneLabelRelevence.count(tempSceneName))
+		{
+			if(sceneLabelRelevence[tempSceneName].count(tempLable))
+			{
+				if(sceneLabelRelevence[tempSceneName][tempLable].count(labelId))
+				{
+					if(sceneLabelRelevence[tempSceneName][tempLable][labelId].count(tempLabel1))
+					{
+						sceneLabelRelevence[tempSceneName][tempLable][labelId][tempLabel1].insert(make_pair(labelId1,relevence));
+					}
+					else
+					{
+						map<int,double> temp;
+						temp.insert(make_pair(labelId1,relevence));
+						sceneLabelRelevence[tempSceneName][tempLable][labelId].insert(make_pair(tempLabel1,temp));
+					}
+				}
+				else
+				{
+					map<int,double> temp;
+					map<string,map<int,double>>temp1;
+					temp.insert(make_pair(labelId1,relevence));
+					temp1.insert(make_pair(tempLabel1,temp));
+					sceneLabelRelevence[tempSceneName][tempLable].insert(make_pair(labelId,temp1));
+				}
+			}
+			else
+			{
+				map<int,double> temp;
+				map<string,map<int,double>>temp1;
+				map<int,map<string,map<int,double>>>temp2;
+				temp.insert(make_pair(labelId1,relevence));
+				temp1.insert(make_pair(tempLabel1,temp));
+				temp2.insert(make_pair(labelId,temp1));
+				sceneLabelRelevence[tempSceneName].insert(make_pair(tempLable,temp2));
+			}
+		}
+		else
+		{
+			map<int,double> temp;
+			map<string,map<int,double>>temp1;
+			map<int,map<string,map<int,double>>>temp2;
+			map<string,map<int,map<string,map<int,double>>>>temp3;
+			temp.insert(make_pair(labelId1,relevence));
+			temp1.insert(make_pair(tempLabel1,temp));
+			temp2.insert(make_pair(labelId,temp1));
+			temp3.insert(make_pair(tempLable,temp2));
+			sceneLabelRelevence.insert(make_pair(tempSceneName,temp3));
+		}
+		line.clear();
+		buffer.clear();
+	}
+	in.clear();
+	in.close();
+
+
+
+	
+	//******************* 4.计算推荐label****************
+
+	//******************relevent 模型部分***************
+	string selectedLabel = scene->sceneModels[recommendBasedModel]->tag;  //获取被选定物体的tag
+	int selectedLabelCount = currentSceneLabels[selectedLabel];
+	map<string,map<int,double>>::iterator releventLabel = sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount].begin();
+	map<int,double>::iterator labelCountIt;
+
+	double maxPMI = -10.0; //用于对PMI值进行归一化
+	double minPMI = 10.0; //用于对PMI值进行归一化
+	double inteval; 
+
+	//统计被选中label的relevent label
+	while( releventLabel != sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount].end())
+	{
+		if(currentSceneLabels.count(releventLabel->first))//表明当前场景中已有次label
+		{
+			labelCountIt = sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount][releventLabel->first].begin();
+			while( labelCountIt != sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount][releventLabel->first].end())
+			{
+				//如果当前场景拥有某label的数量<relevence label的数量，则将label加入
+				if(currentSceneLabels[releventLabel->first] < labelCountIt->first)
+				{
+					if(!recommendLabelAndWeight.count(releventLabel->first))
+					{
+						recommendLabelAndWeight.insert(make_pair(releventLabel->first,labelCountIt->second));
+						if(labelCountIt->second > maxPMI)
+						{
+							maxPMI = labelCountIt->second;
+						}
+						else if( labelCountIt->second < minPMI)
+						{
+							minPMI = labelCountIt->second;
+						}
+					}
+				}
+				labelCountIt++;
+			}//while
+
+		}
+		else  //如果当前无此label，则直接将其添加进来
+		{
+			labelCountIt = sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount][releventLabel->first].begin();
+			recommendLabelAndWeight.insert(make_pair(releventLabel->first,labelCountIt->second));
+			
+			if(labelCountIt->second > maxPMI)
+			{
+				maxPMI = labelCountIt->second;
+			}
+			else if( labelCountIt->second < minPMI)
+			{
+				minPMI = labelCountIt->second;
+			}
+	    }
+		releventLabel++;
+	}
+
+	//对PMI进行归一化
+	map<string,double>::iterator gyIt = recommendLabelAndWeight.begin();
+	inteval = maxPMI - minPMI;
+	if( inteval )
+	{
+		while( gyIt != recommendLabelAndWeight.end())
+		{
+			gyIt->second = 0.7*(gyIt->second-minPMI)/inteval;
+			gyIt++;
+		}
+	}
+
+
+
+	//**************** 输入场景和现有场景比对部分*********************
+	//map<string,int>sourceSceneLabels;
+	map<string,int>::iterator  siIt= sourceSceneLabels.begin();
+	while ( siIt != sourceSceneLabels.end())
+	{
+		if(currentSceneLabels.count(siIt->first))//表明现有场景已有输入照片中的该物体，则比对其数量
+		{
+			if( currentSceneLabels[siIt->first]  < siIt->second )//如果当前场景中某个label数量小于输入场景中该label数量，则加入到推荐列表
+			{
+				if(recommendLabelAndWeight.count(siIt->first))
+				{
+					recommendLabelAndWeight[siIt->first] +=0.1;
+				}
+				else
+				{
+					recommendLabelAndWeight.insert(make_pair(siIt->first,0.5));
+				}
+			}
+		}
+		siIt++;
+	}//while
+
+
+   //*****************读取该场景类别下该模型类别对应的relationship partner****************
+	vector<string> partner;
+	inPath = "SearchResult\\LabelRelevencePMI.txt";
+	in.open(inPath);
+	if(!in)
+	{
+		//
+	}
+
+	while(!in.eof())
+	{
+		getline(in,buffer);
+		istringstream line(buffer);
+		line>>tempSceneName>>tempLable>>tempLabel1;
+		if ( tempSceneName==sceneStyle && tempLable ==selectedLabel)
+		{
+			partner.push_back(tempLabel1);
+		}
+	}
+	in.clear();
+	in.close();
+
+	for (int i = 0; i < partner.size(); i++)
+	{
+		if(recommendLabelAndWeight.count(partner[i]))
+		{
+			recommendLabelAndWeight[partner[i]] +=0.2;
+		}
+		else
+		{
+			recommendLabelAndWeight.insert(make_pair(partner[i],0.5));
+		}
+	}
+
+
+	//******************** 整个场景类别的比对*****************
+	//由于一次推荐的数量有限，所以需要控制数量，当已有推荐label 数目超过一定数量时，则不再启用
+	if(recommendLabelAndWeight.size() <18)
+	{
+		//先读取所有类别场景中的label集合
+		inPath = "MLData\\AllSceneLableAndCount.txt";	
+		in.open(inPath);
+		if(!in)
+		{
+			//
+		}
+		//map<string,map<string,in>>sceneLabelAndCount;
+		while(!in.eof())
+		{
+			getline(in,buffer);
+			istringstream line(buffer);
+			line>>tempSceneName>>tempLable>>labelNumb;
+
+			if(sceneLabelAndCount.count(tempSceneName))
+			{
+				if( !sceneLabelAndCount[tempSceneName].count(tempLable))
+				{
+					sceneLabelAndCount[tempSceneName].insert(make_pair(tempLable,labelNumb));
+				}
+			}
+			else
+			{
+				map<string,int>temp;
+				temp.insert(make_pair(tempLable,labelNumb));
+				sceneLabelAndCount.insert(make_pair(tempSceneName,temp));
+			}
+			line.clear();
+			buffer.clear();
+		}
+		in.clear();
+		in.close();
+
+		siIt = sceneLabelAndCount[sceneStyle].begin();
+		while (siIt != sceneLabelAndCount[sceneStyle].end())
+		{
+			if( !recommendLabelAndWeight.count(siIt->first))
+			{
+				recommendLabelAndWeight.insert(make_pair(siIt->first,0.2));
+			}
+			siIt++;
+		}
+	}//if
+
+
+	//用于测试，输出结果
+	ofstream out;
+	string outPath = "SearchResult\\RecommendLabelResult.txt";
+	out.open(outPath);
+	if(!out)
+	{
+
+	}
+
+	gyIt = recommendLabelAndWeight.begin();
+	while( gyIt != recommendLabelAndWeight.end() )
+	{
+		out<<sceneStyle<<" "<<gyIt->first<<" "<<gyIt->second<<endl;
+		gyIt++;
+	}
+
+	out.close();
 	
 }

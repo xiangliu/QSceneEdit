@@ -694,10 +694,10 @@ void MainWindow::Search3DScenes()
 		}
 		
 		//****************检索3D场景********************
-		int resultSum = 8;
+		//int resultSum = 8;
 		////检索
-		//(int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);)//原有不是用calssify的方法
-		//int resultSum = Search3DSceneFromBufferWithClassify(sceneClass,twdScene,this->relationship,err,pSceneMatResult);
+		////(int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);)//原有不是用calssify的方法
+		int resultSum = Search3DSceneFromBufferWithClassify(sceneClass,twdScene,this->relationship,err,pSceneMatResult);
 		//if(!resultSum)
 		//{
 		//	//QMessageBox::warning(this,tr("Scenes Search"),tr("Search failed!"),QMessageBox::Yes);
@@ -787,6 +787,7 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		rotateSceneAction=new QAction(QIcon(":/image/rotate.png"),tr("旋转场景"),this);
 		connect(rotateSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
 
+		//原本用于添加检索输入框，后被改成用于更换某类模型
 		pickupCubeAction = new QAction(QIcon(":/image/contextSearch.png"),tr("添加物体检索框"),this);
 		connect(pickupCubeAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(pickupCubeAction()));
 
@@ -822,7 +823,6 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		//create connection
 		connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));
 		connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
-		//connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
 		
 		//1.获取场景,如果失败则用message提示
 		string temp1 = string(this->pSceneMatResult[this->selcted3DScene].name)+".obj";
@@ -832,7 +832,19 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 			QMessageBox::warning(this,tr("Scenes Loading"),tr("Scene Laod failed!"),QMessageBox::Yes);
 			return;
 		}
-		//OpenSceneOfSearch( temp1.c_str());
+
+		//给sceneDisplayWidget传递模型推荐时需要使用的数据
+		for(int i = 0 ; i< twdObjectCount ; i++)
+		{
+			if(sceneDisplayWidget->sourceSceneLabels.count(pictureDisplayWidget->objects[i]->tag.toStdString()))
+			{
+				sceneDisplayWidget->sourceSceneLabels[pictureDisplayWidget->objects[i]->tag.toStdString()]++;
+			}
+			else
+			{
+				sceneDisplayWidget->sourceSceneLabels.insert(make_pair(pictureDisplayWidget->objects[i]->tag.toStdString(),1));
+			}
+		}
 
 		//准备显示场景的widget
 		sceneDisplayWidget->resize(ui->centralWidget->width(),ui->centralWidget->height());

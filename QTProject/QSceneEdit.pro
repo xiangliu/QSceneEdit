@@ -203,6 +203,7 @@ SOURCES += main.cpp\
     Material.cpp \
     Scene.cpp \
     QPictureDisplay.cpp \
+    QSameModelListDialog.cpp \
     QSegPictureDisplay.cpp \
     QSetRelationDialog.cpp \
     QSearchListDisplay.cpp \
@@ -210,7 +211,8 @@ SOURCES += main.cpp\
     QModelListDialog.cpp \
     ImageSeg/SegObject.cpp \
     ImageSeg/MeanShift.cpp \
-    ImageSeg/CvvImage.cpp
+    ImageSeg/CvvImage.cpp \
+    NaiveBayesClassify/NB.cpp
 
 HEADERS  += mainwindow.h \
     trimesh/XForm.h \
@@ -262,6 +264,7 @@ HEADERS  += mainwindow.h \
     Scene.h \
     QSceneDisplay.h \
     QPictureDisplay.h \
+    QSameModelListDialog.h \
     QSegPictureDisplay.h \
     QSetRelationDialog.h \
     QSearchListDisplay.h \
@@ -269,7 +272,8 @@ HEADERS  += mainwindow.h \
     QTagDisplay.h \
     ImageSeg/SegObject.h \
     ImageSeg/MeanShift.h \
-    ImageSeg/CvvImage.h
+    ImageSeg/CvvImage.h \
+    NaiveBayesClassify/NB.h
 
 FORMS    += mainwindow.ui
 

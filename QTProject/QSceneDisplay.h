@@ -11,6 +11,7 @@
 #include <QPoint>
 #include <QMouseEvent>
 #include "QModelListDialog.h"
+#include "QSameModelListDialog.h"
 #include "gl/GL.h"
 #include "gl/GLU.h"
 #include "gl/glut.h"
@@ -75,10 +76,11 @@ public:
 	map<string,int>sourceSceneLabels;  //用户输入场景所包含的场景集合
 	map<string,int>currentSceneLabels;  //检索得到的当前场景所拥有的label集合
 	map<string,map<string,map<int,map<string,map<int,double>>>>> sceneLabelRelevence;  //保存不同场景中不同物体label下的相关度
-	map<string,float> recommendLabelAndWeight; //用于保存当前推荐所有物体的label和权重
+	map<string,double> recommendLabelAndWeight; //用于保存当前推荐所有物体的label和权重
 
 	//**************与单个模型检索结果列表展示相关的变量***************
 	QModelListDialog* modelListDialog;
+	QSameModelListDialog* sameModelListDialog;   //用于替换单个模型类别的对话框
 
 	// 自定义方法
 public:
@@ -105,7 +107,8 @@ protected:
 	int ProcessSelection(int xPos,int yPos); //用于处理用户的拾取，返回值表明用户是否拾取成功
 	void ProcessModels(GLuint *pSelectBuff);
 	void recommendModelsBySelectedLabel(int recommendBasedModel);   //基于用于选定的模型来推荐新的模型
-	//bool importanceCmp(PAIR& x,PAIR& y); //用于排序的比较函数
+	void recommendModelsBySelectedLabel2(int recommendBasedModel); //基于用于选定的模型来推荐新的模型,第二版本推荐算法
+	
 	// 事件处理
 protected:
     void mouseMoveEvent(QMouseEvent *event);
