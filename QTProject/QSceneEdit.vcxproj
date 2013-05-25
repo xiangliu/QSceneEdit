@@ -574,31 +574,26 @@
   <ItemGroup>
     <CustomBuild Include="QSceneEdit.qrc">
       <FileType>Document</FileType>
-      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe;QSceneEdit.qrc;image\SearchInseatObject.png;image\brush.png;image\choose.png;image\contextSearch.png;image\display.png;image\eraser.png;image\obj_rotate.png;image\obj_trans.png;image\open.png;image\pickup.png;image\relationship.png;image\rotate.png;image\save.png;image\search.png;image\segment.png;image\trans.png;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe;QSceneEdit.qrc;image\brush.png;image\eraser.png;image\open.png;image\pickup.png;image\recommend.png;image\relationship.png;image\removeObject.png;image\save.png;image\sceneOperation.png;image\search.png;image\segment.png;%(AdditionalInputs)</AdditionalInputs>
       <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe -name QSceneEdit QSceneEdit.qrc -o debug\qrc_QSceneEdit.cpp</Command>
       <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">RCC QSceneEdit.qrc</Message>
       <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Debug|Win32&apos;">debug\qrc_QSceneEdit.cpp;%(Outputs)</Outputs>
-      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe;QSceneEdit.qrc;image\SearchInseatObject.png;image\brush.png;image\choose.png;image\contextSearch.png;image\display.png;image\eraser.png;image\obj_rotate.png;image\obj_trans.png;image\open.png;image\pickup.png;image\relationship.png;image\rotate.png;image\save.png;image\search.png;image\segment.png;image\trans.png;%(AdditionalInputs)</AdditionalInputs>
+      <AdditionalInputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe;QSceneEdit.qrc;image\brush.png;image\eraser.png;image\open.png;image\pickup.png;image\recommend.png;image\relationship.png;image\removeObject.png;image\save.png;image\sceneOperation.png;image\search.png;image\segment.png;%(AdditionalInputs)</AdditionalInputs>
       <Command Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">C:\Qt\4.8.2\bin\rcc.exe -name QSceneEdit QSceneEdit.qrc -o release\qrc_QSceneEdit.cpp</Command>
       <Message Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">RCC QSceneEdit.qrc</Message>
       <Outputs Condition="&apos;$(Configuration)|$(Platform)&apos;==&apos;Release|Win32&apos;">release\qrc_QSceneEdit.cpp;%(Outputs)</Outputs>
     </CustomBuild>
-    <None Include="image\SearchInseatObject.png" />
     <None Include="image\brush.png" />
-    <None Include="image\choose.png" />
-    <None Include="image\contextSearch.png" />
-    <None Include="image\display.png" />
     <None Include="image\eraser.png" />
-    <None Include="image\obj_rotate.png" />
-    <None Include="image\obj_trans.png" />
     <None Include="image\open.png" />
     <None Include="image\pickup.png" />
+    <None Include="image\recommend.png" />
     <None Include="image\relationship.png" />
-    <None Include="image\rotate.png" />
+    <None Include="image\removeObject.png" />
     <None Include="image\save.png" />
+    <None Include="image\sceneOperation.png" />
     <None Include="image\search.png" />
     <None Include="image\segment.png" />
-    <None Include="image\trans.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

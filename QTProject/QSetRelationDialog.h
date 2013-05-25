@@ -4,7 +4,9 @@
 /************************************************************************/
 /* 用于设置所有object之间的relationship                                                                     */
 /************************************************************************/
-#include <QImage>
+#include <set>
+
+//#include <QImage>
 #include <QLabel>
 #include <QDialog>
 #include <QWidget>
@@ -15,19 +17,19 @@
 #include <QComboBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-
 #include <QSplitter>
 #include <QPushButton>
 #include <QStandardItemModel>
 #include <QStandardItem>
 #include <QModelIndex>
+
 #include "Global.h"
 #include "ImageSeg/SegObject.h"
 #include "ImageSeg/CvvImage.h"
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/imgproc/imgproc_c.h"
+//#include "opencv2/core/core.hpp"
+//#include "opencv2/highgui/highgui.hpp"
+//#include "opencv2/imgproc/imgproc.hpp"
+//#include "opencv2/imgproc/imgproc_c.h"
 
 #define SMALLIMAGESIZE 256  //用于控制小图片的显示大小
 
@@ -55,8 +57,14 @@ public:
 	//用于保存用户选择了哪边的tag
 	enum ClickState{nonClicked,leftListClicked ,rightListClicked,bothClicked};
 	ClickState clickState;
+
 	int leftChoice;  //用于记录左边挑选的object的tag
 	int rightChoice; //用于记录右边挑选的object的tag
+
+	//修改交互方式以后的变量,因为每次能选择多个模型，所以就必须放到set里保存
+	std::set<int> leftChoiceSet;   //用于记录左边挑选的object的tag
+	std::set<int> rightChoiceSet;   //用于记录右边挑选的object的tag
+
 
 	//窗口显示内容对应控件
 	int objectCount;             //总物体数

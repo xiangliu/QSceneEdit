@@ -913,28 +913,10 @@
     <CustomBuild Include="QSceneEdit.qrc">
       <Filter>Resource Files</Filter>
     </CustomBuild>
-    <None Include="image\SearchInseatObject.png">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="image\brush.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="image\choose.png">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="image\contextSearch.png">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="image\display.png">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="image\eraser.png">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="image\obj_rotate.png">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="image\obj_trans.png">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="image\open.png">
@@ -943,22 +925,25 @@
     <None Include="image\pickup.png">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="image\recommend.png">
+      <Filter>Resource Files</Filter>
+    </None>
     <None Include="image\relationship.png">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="image\rotate.png">
+    <None Include="image\removeObject.png">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="image\save.png">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="image\sceneOperation.png">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="image\search.png">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="image\segment.png">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="image\trans.png">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

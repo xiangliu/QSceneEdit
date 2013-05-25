@@ -4,6 +4,7 @@
 #include <iostream>
 #include <algorithm>
 #include <strstream>
+#include <iomanip>
 using namespace std;
 
 #define BUFFER_LENGTH 64
@@ -18,7 +19,7 @@ QSceneDisplay::QSceneDisplay(QWidget *parent)
 	scene=NULL;
 	up[0]=up[2]=0;
 	up[1]=1;
-	sceneDisplayState = PrepareState; // 平移物体
+	sceneDisplayState = SceneState; // 平移物体
 	selectModel=-1;
 	glProjectionM=new GLdouble[16];
 	glModelM=new GLdouble[16];
@@ -27,6 +28,9 @@ QSceneDisplay::QSceneDisplay(QWidget *parent)
 	//用于保存单个模型检索结果
 	selected3DModel = -1;
 	this->pObjectMatchResult = new ObjectMatRes[MODELSEARCHRESULTNUMBER];
+
+	//模型推荐部分初始化工作
+	isFirstRecommend = true;
 }
 
 QSceneDisplay::~QSceneDisplay()
@@ -100,9 +104,9 @@ void QSceneDisplay::mouseMoveEvent(QMouseEvent *event)
 	if(scene==NULL)
 		return;
 	QPoint point=event->pos();
-	if (event->buttons() & Qt::LeftButton)
+	if (event->buttons() & Qt::LeftButton) //平移操作
 	{
-		if(sceneDisplayState == PrepareState )
+		if(sceneDisplayState == SceneState )  //对整个场景进行操作
 		{
 			float dx=float(point.x()-btnDown.x())*(plane[1]-plane[0])/width(); // 转换到视景体移动的距离
 			float dy=float(btnDown.y()-point.y())*(plane[3]-plane[2])/height();
@@ -112,61 +116,87 @@ void QSceneDisplay::mouseMoveEvent(QMouseEvent *event)
 			plane[3]-=dy;
 			//btnDown=point;
 		}
-		else if (sceneDisplayState== ObjectTranslation && isSelectedModelValid())
+		else if (sceneDisplayState== ObjectState && isSelectedModelValid())//ObjectTranslation
 		{
 			GLdouble ax,ay,az,bx,by,bz;
-			int invert_y=height()-btnDown.y();
+			int invert_y= height() - btnDown.y();
 			gluUnProject(btnDown.x(),invert_y,0,glModelM,glProjectionM,glViewM,&ax,&ay,&az); // 找到坐标系中点
 			invert_y=height()-point.y();
 			gluUnProject(point.x(),invert_y,0,glModelM,glProjectionM,glViewM,&bx,&by,&bz); // 找到坐标系中点
-			Model* model=scene->sceneModels[selectModel];
+			
+			Model* model = scene->GetModel(selectModel);
+			//Model* model=scene->sceneModels[selectModel];
 			model->tx+=bx-ax;
 			model->ty+=by-ay;
 			model->tz+=bz-az;
 		}
-		else if(sceneDisplayState==ObjectRotation && isSelectedModelValid())
+	}
+	else if (event->buttons()&Qt::RightButton) //旋转操作
+	{
+		if ( sceneDisplayState == SceneState )
 		{
-			Model* model=scene->sceneModels[selectModel];
+			xangle+=float(point.x()-btnDown.x())*90/width();  // 绕y旋转的角度，角度值
+			yangle+=float(btnDown.y()-point.y())*90/height(); // 绕x轴旋转角度，角度值
+
+			if (xangle>360)
+				xangle-=360;
+			else if(xangle<0)
+				xangle+=360;
+
+			if (yangle>360)
+			{
+				yangle-=360;
+				up[1]*=-1;
+			}
+			else if(yangle<0)
+			{
+				yangle+=360;
+				up[1]*=-1;
+			}
+
+			float anglex=speed*xangle;
+			float angley=speed*yangle;
+
+			eye[0]=sin(angley)*cos(anglex);
+			eye[1]=cos(angley);
+			eye[2]=sin(angley)*sin(anglex);
+			eye=normalize(eye);
+
+			eye=scene->bsphere.center+radius*eye;
+		}
+		else if ( sceneDisplayState==ObjectState && isSelectedModelValid() )
+		{
+            Model* model = scene->GetModel(selectModel);
+			//Model* model=scene->sceneModels[selectModel];
 			model->xangle+=double(point.y()-btnDown.y())/3.6;
 			model->yangle+=double(point.x()-btnDown.x())/3.6;
 		}
-	}
-	else if (event->buttons()&Qt::RightButton)
-	{
-		xangle+=float(point.x()-btnDown.x())*90/width();  // 绕y旋转的角度，角度值
-		yangle+=float(btnDown.y()-point.y())*90/height(); // 绕x轴旋转角度，角度值
-
-		if (xangle>360)
-			xangle-=360;
-		else if(xangle<0)
-			xangle+=360;
-
-		if (yangle>360)
-		{
-			yangle-=360;
-			up[1]*=-1;
-		}
-		else if(yangle<0)
-		{
-			yangle+=360;
-			up[1]*=-1;
-		}
-
-		float anglex=speed*xangle;
-		float angley=speed*yangle;
-
-		eye[0]=sin(angley)*cos(anglex);
-		eye[1]=cos(angley);
-		eye[2]=sin(angley)*sin(anglex);
-		eye=normalize(eye);
-
-		eye=scene->bsphere.center+radius*eye;
-
+		
 		//btnDown=point;
 	}
 	btnDown=point;
     this->updateGL();
 }
+
+//仅仅用于拾取
+void QSceneDisplay::mouseDoubleClickEvent(QMouseEvent *event)
+{
+	if(scene==NULL)
+		return;
+	//setMouseTracking(true);
+	//btnDown=event->pos();
+
+	if (event->button()==Qt::LeftButton)
+	{
+
+		if( ProcessSelection(event->pos().x(),event->pos().y()))
+		{
+			this->sceneDisplayState = ObjectState; //进入拾取阶段,表明拾取到了物体
+		}
+	}
+	this->updateGL();
+}
+
 
 void QSceneDisplay::mousePressEvent(QMouseEvent *event)
 {
@@ -174,38 +204,38 @@ void QSceneDisplay::mousePressEvent(QMouseEvent *event)
 		return;
 	setMouseTracking(true);
 	btnDown=event->pos();
-	if (event->button()==Qt::LeftButton)
-	{
-		//表明拾取阶段
-		//if (sceneDisplayState==PrepareState)
-		//{
-			//ProcessSelection(btnDown.x(),btnDown.y());
-		if( ProcessSelection(btnDown.x(),btnDown.y()))
-		{
-			this->sceneDisplayState = ObjectSelected; //进入拾取阶段,表明拾取到了物体
-		}
-		//}
-		////表明检索到单个model之后点击加入场景之中
-		//else if(this->sceneDisplayState == SearchSingleModel)
-		//{
+	//if (event->button()==Qt::LeftButton)
+	//{
+	//	//表明拾取阶段
+	//	//if (sceneDisplayState==PrepareState)
+	//	//{
+	//		//ProcessSelection(btnDown.x(),btnDown.y());
+	//	if( ProcessSelection(btnDown.x(),btnDown.y()))
+	//	{
+	//		this->sceneDisplayState = ObjectState; //进入拾取阶段,表明拾取到了物体
+	//	}
+	//	//}
+	//	////表明检索到单个model之后点击加入场景之中
+	//	//else if(this->sceneDisplayState == SearchSingleModel)
+	//	//{
 
-		//}
-		//else if (state==3 && isSelectedModelValid())
-		//{
-		//	int invert_y=height()-btnDown.y();
-		//	scene->sceneModels[selectModel]->ball.arcball_tranStart(btnDown.x(),invert_y);
-		//}
-		//else if (state==4 && isSelectedModelValid())
-		//{
-		//	int invert_y=height()-btnDown.y();
-		//	scene->sceneModels[selectModel]->ball.arcball_rotStart(btnDown.x(),invert_y);
-		//}
-	}
+	//	//}
+	//	//else if (state==3 && isSelectedModelValid())
+	//	//{
+	//	//	int invert_y=height()-btnDown.y();
+	//	//	scene->sceneModels[selectModel]->ball.arcball_tranStart(btnDown.x(),invert_y);
+	//	//}
+	//	//else if (state==4 && isSelectedModelValid())
+	//	//{
+	//	//	int invert_y=height()-btnDown.y();
+	//	//	scene->sceneModels[selectModel]->ball.arcball_rotStart(btnDown.x(),invert_y);
+	//	//}
+	//}
 }
 
 void QSceneDisplay::wheelEvent(QWheelEvent *event)
 {
-	if (sceneDisplayState==PrepareState)
+	if (sceneDisplayState== SceneState)
 	{
 		double numDegrees = -event->delta() / 8.0;
 		double numSteps = numDegrees / 15.0;
@@ -220,12 +250,15 @@ void QSceneDisplay::wheelEvent(QWheelEvent *event)
 		plane[2]=centery-height/2;
 		plane[3]=centery+height/2;
 	}
-	else if (sceneDisplayState > 2 && isSelectedModelValid())
+	else if (sceneDisplayState ==ObjectState  && isSelectedModelValid())
 	{
 		double numDegrees = event->delta() / 8.0;
 		double numSteps = numDegrees / 15.0;
-		scene->sceneModels[selectModel]->scaled *=pow(1.125, numSteps);;
-		//scene->sceneModels[selectModel]->scale+=event->delta()/100;
+
+		//scene->sceneModels[selectModel]->scaled *=pow(1.125, numSteps);
+		////scene->sceneModels[selectModel]->scale+=event->delta()/100;
+		Model* t = scene->GetModel(selectModel);
+		t->scaled *= pow(1.125, numSteps);
 	}
 	this->updateGL();
 }
@@ -285,7 +318,7 @@ void QSceneDisplay::DrawScene()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	//gluLookAt(eye[0],eye[1],eye[2],scene->bsphere.center[0],scene->bsphere.center[1],scene->bsphere.center[2],up[0],up[1],up[2]);
-	if(sceneDisplayState > 2 && isSelectedModelValid())
+	//if(sceneDisplayState > 2 && isSelectedModelValid())
 		SetProjectionModelView();
 
 	glInitNames();
@@ -300,27 +333,39 @@ void QSceneDisplay::DrawScene()
 		scene->sceneModels[occurs]->visible=false;
 	}
 
-	scene->DrawScene();
+	//***********旧的绘制模型和包围盒****************
+	//scene->DrawScene();
+	//if ( selectModel<0 )
+	//{
+	//	return;
+	//}
+	//else
+	//{
+	//	scene->sceneModels[selectModel]->DrawBbox();
+	//}
 
+	//新的绘制模型和包围盒方法
+	scene->DrawSceneWithNewInsertModel();
+	
 	if ( selectModel<0 )
 	{
 		return;
 	}
-	//else if(selectModel > this->scene->modelSize)
-	//{
-	//	this->scene->DrawModelSearchBBox();
-	//}
-	//else
-	//{
+	else if( selectModel < this->scene->sceneModels.size() )
+	{
 		scene->sceneModels[selectModel]->DrawBbox();
-	//}
+	}
+	else if(selectModel < this->scene->GetAllModelSize())
+	{
+		scene->newInsertModels[selectModel - this->scene->sceneModels.size()]->DrawBbox();
+	}
+	else
+	{
+		return ;
+	}
 	
 }
 
-void QSceneDisplay::ChooseModelAction()
-{
-	sceneDisplayState = PrepareState; // 选择模型
-}
 
 int QSceneDisplay::ProcessSelection( int xPos,int yPos )
 {
@@ -379,20 +424,13 @@ void QSceneDisplay::ProcessModels( GLuint *pSelectBuff )
 
 }
 
-void QSceneDisplay::TransModelAction()
-{
-	sceneDisplayState = ObjectTranslation;
-}
-
-void QSceneDisplay::RotateModelAction()
-{
-	//state=4;
-	sceneDisplayState = ObjectRotation;
-}
 
 bool QSceneDisplay::isSelectedModelValid()
 {
-	if (selectModel<0 || selectModel>(scene->modelSize-1))
+	//if (selectModel<0 || selectModel>(scene->modelSize-1))
+	//	return false;
+	//return true;
+	if (selectModel<0 || selectModel>(scene->GetAllModelSize()-1))
 		return false;
 	return true;
 }
@@ -404,56 +442,33 @@ void QSceneDisplay::SetProjectionModelView()
 	glGetIntegerv(GL_VIEWPORT,glViewM);
 }
 
-//暂时弃用该方案，由于太复杂
-//用于往场景中输入检索框，实现方式跟拾取一样，仅仅将拾取物体的id改成了新插入物体的id
-void QSceneDisplay::pickupCubeAction()
-{
-	/*
-	//插入检索框的前一状态只需要不是InseartObjectCube
-	if(sceneDisplayState != InseartObjectCube)
-	{
-		//状态转换
-		this->sceneDisplayState = InseartObjectCube;
-		//在场景之中插入保存要画的检索框的Model
-		Model* insertModel = new Model;
-		this->scene->sceneModels.push_back(insertModel);
-		//记录要画的cube
-		this->selectModel = this->scene->modelSize+1;
-
-		//绘制cube和场景
-		this->DrawScene();
-	}
-	*/
-
-	//string toLowerCase;
-	sameModelListDialog = new QSameModelListDialog;
-	strstream ss;
-	string temp;
-	//更换模型类别必须在选定某个模型之后进行
-	if(this->sceneDisplayState == ObjectSelected)
-	{
-		string selectedLabel = scene->sceneModels[this->selectModel]->tag; 
-		transform(selectedLabel.begin(),selectedLabel.end(),selectedLabel.begin(),tolower);
-		for(int i = 1; i<19; i++)
-		{
-			ss<<i;
-			ss>>temp;
-			sameModelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+selectedLabel+"\\"+selectedLabel+temp+"\\"+selectedLabel+temp);
-			ss.clear();
-		}
-
-		int modelListDialogWidth = this->width()*0.75;
-		int modelListDialogHeight = this->height()*0.75;
-		sameModelListDialog->DownloadModelImage(modelListDialogWidth,modelListDialogHeight);
-		sameModelListDialog->show();
-	}
-}
-
-//typedef pair<string, float> PAIR;  
-//bool QSceneDisplay::importanceCmp(PAIR& x,PAIR& y)  
-//{  
-//	return x.second > y.second;  
-//}  
+////暂时弃用该方案，由于太复杂
+////用于往场景中输入检索框，实现方式跟拾取一样，仅仅将拾取物体的id改成了新插入物体的id
+//void QSceneDisplay::pickupCubeAction()
+//{
+//	//string toLowerCase;
+//	sameModelListDialog = new QSameModelListDialog;
+//	strstream ss;
+//	string temp;
+//	//更换模型类别必须在选定某个模型之后进行
+//	if(this->sceneDisplayState == ObjectState)
+//	{
+//		string selectedLabel = scene->sceneModels[this->selectModel]->tag; 
+//		transform(selectedLabel.begin(),selectedLabel.end(),selectedLabel.begin(),tolower);
+//		for(int i = 1; i<19; i++)
+//		{
+//			ss<<i;
+//			ss>>temp;
+//			sameModelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+selectedLabel+"\\"+selectedLabel+temp+"\\"+selectedLabel+temp);
+//			ss.clear();
+//		}
+//
+//		int modelListDialogWidth = this->width()*0.75;
+//		int modelListDialogHeight = this->height()*0.75;
+//		sameModelListDialog->DownloadModelImage(modelListDialogWidth,modelListDialogHeight);
+//		sameModelListDialog->show();
+//	}
+//}
 
 
 //用来响应菜单的单个模型检索功能
@@ -465,7 +480,7 @@ void QSceneDisplay::searchInseartObject()
 	//创建dialog对话框
 	modelListDialog = new QModelListDialog;
 	//第二种检索策略
-	if(this->sceneDisplayState == ObjectSelected)
+	if(this->sceneDisplayState == ObjectState)
 	{
 		 //计算检索列表
 		 this->recommendModelsBySelectedLabel2(this->selectModel);
@@ -488,10 +503,11 @@ void QSceneDisplay::searchInseartObject()
 		 this->recommendModelsBySelectedLabel2(maxImportantModel);
 	}
 
-	//测试使用
+	////测试使用
 	ofstream out;
-	string outPutpath = "SearchResult\\RecommendLabelResult1.txt";
+	string outPutpath = "SearchResult\\RecommendLabelResult.txt";
 	out.open(outPutpath);
+
 	//构造推荐列表的数据,先给推荐列表排序，再选3,3,2,2,2,1,1,1,1,1,1一共11类label进行推荐，如果不够，随机推荐
 	map<string,double>::iterator recoIt = recommendLabelAndWeight.begin();
 	map<double,string>tempRecommend;
@@ -509,7 +525,7 @@ void QSceneDisplay::searchInseartObject()
 	}
 
 	string toLowerCase;
-	map<double,string>::iterator recoIt1 = tempRecommend.begin();
+	map<double,string>::reverse_iterator recoIt1 = tempRecommend.rbegin();
 	if(tempRecommend.size() >= 18)
 	{
 
@@ -528,7 +544,7 @@ void QSceneDisplay::searchInseartObject()
 	out.close();
 
 	//状态转换
-	this->sceneDisplayState = SearchSingleModel;
+	this->sceneDisplayState = ObjectState;
 
 	//传递检索数据给modelListDialog，并显示
 	//modelListDialog->pObjectMatchResult =this->pObjectMatchResult;
@@ -539,32 +555,72 @@ void QSceneDisplay::searchInseartObject()
 	modelListDialog->show();
 	
 }
+//为插入的模型计算模型相关信息
+void QSceneDisplay::generateInseartModleInformation(Model* insertModel)
+{
+	//用于给新插入的模型命名
+	strstream ss;
+	string tempModelSize;
+	ss<<this->scene->modelSize;
+	ss>>tempModelSize;
+	insertModel->name = "inseartModel"+tempModelSize;
+	insertModel->scene = scene;
+	//insertModel->need_bbox();//此处不再使用，因为仅仅适应于场景内的物体，单独的物体还是用trimesh自带方法计算
+	//insertModel->mesh->need_bbox();
+	insertModel->need_bbox_newInseartOBJ();
 
+	insertModel->visible = true;
+
+	//float
+	float sizeScale;  //计算模型伸缩比例大小
+	float tempLength1 = insertModel->bbox.size().sumabs();  //求对角线的平方
+	float sceneLength = scene->bbox.size().sumabs();
+	sizeScale = sceneLength/(tempLength1*2.0);
+	insertModel->scaled = sizeScale;
+	//insertModel->scaled = 1.0;
+
+	insertModel->need_bsphere_newInseartOBJ();
+
+	insertModel->tx =( scene->bbox.center() - insertModel->bbox.center())[0];
+	insertModel->ty =( scene->bbox.center() - insertModel->bbox.center())[1];
+	insertModel->tz =( scene->bbox.center() - insertModel->bbox.center())[2];
+}
 
 //本函数响应QModelListDialog发射的信号，download被挑选的物体，随后再插入场景，让场景重绘
-void QSceneDisplay::Inseart3DModel(int selectedModel)
+void QSceneDisplay::Inseart3DModel(int sModel)
 {
 	//首先记录用户的选择
-	this->selected3DModel = selectedModel;
+	this->selected3DModel = sModel;
+	
+	Model* insertModel = new Model;
+	//string modelFilepath(this->pObjectMatchResult[selected3DModel].name);
+	string modelFilepath(this->modelListDialog->objectFilepath[sModel]);;
+	//insertModel->ReadModel(modelFilepath+".obj");
+	insertModel->ReadOBJ(modelFilepath+".obj");
 
-	//其次读取单个模型
-	Model* insertModel = this->scene->sceneModels[this->scene->sceneModels.size()-1];
-	string modelFilepath(this->pObjectMatchResult[selected3DModel].name);
-	insertModel->ReadModel(modelFilepath);
-	//由于原本插入模型的时候scene->modelSize没变，所以这里一定要加1
-	this->scene->modelSize++;
+	////由于原本插入模型的时候scene->modelSize没变，所以这里一定要加1
+	//this->scene->sceneModels.push_back(insertModel);
+	//this->scene->modelSize++;
+	this->scene->newInsertModels.push_back(insertModel);
+	this->scene->insertModelSize++;
+	this->scene->allModelSize = this->scene->insertModelSize+ this->scene->modelSize;
+	
+	this->generateInseartModleInformation(insertModel);
 
-	//将整个系统的状态设定成ObjectRotation,因为还有新插入模型的BBox
-	this->sceneDisplayState = ObjectRotation;
+	this->scene->ModelMap.insert(make_pair(insertModel->name,this->scene->GetAllModelSize()-1));
+
+	selectModel = this->scene->GetAllModelSize()-1;
+	//selectModel = 1;
 
 	//重绘整个场景
 	this->DrawScene();
+	//insertModel->DrawTrimesh();
 }
 
 
 
 /************************************************************************/
-/*/
+/* 暂时被弃用
 //基于用于选定的模型来推荐新的模型
 //实现方案：1.读取不同场景类别下的所有标签集合
 2.存储当前场景label集合 和输入场景label集合
@@ -796,6 +852,16 @@ void QSceneDisplay::recommendModelsBySelectedLabel(int recommendBasedModel)
 /************************************************************************/
 void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 {
+	//防止上一次的数据对本次推荐产生污染，所以必须对上次推荐数据进行清空
+	if( !currentSceneLabels.empty())
+	{
+		currentSceneLabels.clear();
+	}
+	
+	if (!recommendLabelAndWeight.empty())
+	{
+		recommendLabelAndWeight.clear();
+	}
 	
 	//*********** 1. 读取每类场景中的所有标签*********
 	string buffer;
@@ -805,60 +871,82 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 	ifstream in;
 
 	//********** 2.存储当前场景label集合 和输入场景label集合<已经由mainwindow传递过来>*************
-	for(int i=0; i< scene->modelSize; i++)
-	{
-		if(currentSceneLabels.count(scene->sceneModels[i]->tag))
+	//if(isFirstRecommend)  //可能在第二次推荐过程中有些模型增加或者被删除
+	//{
+		for(int i=0; i< scene->modelSize; i++)
 		{
-			currentSceneLabels[scene->sceneModels[i]->tag]++;
-		}
-		else
-		{
-			currentSceneLabels.insert(make_pair(scene->sceneModels[i]->tag,1));
-		}
-	}
+			if(scene->sceneModels[i]->visible) //仅仅当模型可见才需要添加，因为某些模型被删除也仅仅设置成不可见
+			{
+				if(currentSceneLabels.count(scene->sceneModels[i]->tag))
+				{
+					currentSceneLabels[scene->sceneModels[i]->tag]++;
+				}
+				else
+				{
+					currentSceneLabels.insert(make_pair(scene->sceneModels[i]->tag,1));
+				}//else
+			}//if
+
+		}//for
+	//}
+
 	
 
 	//****************** 3.读取不同场景下不同label的relevence label ***************************
 	string tempLabel1;
 	int labelId,labelId1;
 	double relevence;
-	inPath = "SearchResult\\LabelRelevencePMI.txt";
-	in.open(inPath);
-	if(!in)
-	{
-		//
-	}
 
-	while(!in.eof())
+	if (isFirstRecommend) //仅仅需要初始化一次
 	{
-		getline(in,buffer);
-		istringstream line(buffer);
-		line>>tempSceneName>>tempLable>>labelId>>tempLabel1>>labelId1>>relevence;
-		//map<string,map<string,map<int,map<string,map<int,double>>>>> sceneLabelRelevence;  //保存不同场景中不同物体label下的相关度
-		if(sceneLabelRelevence.count(tempSceneName))
+		inPath = "SearchResult\\LabelRelevencePMI.txt";
+		in.open(inPath);
+		if(!in)
 		{
-			if(sceneLabelRelevence[tempSceneName].count(tempLable))
+			//
+		}
+
+		while(!in.eof())
+		{
+			getline(in,buffer);
+			istringstream line(buffer);
+			line>>tempSceneName>>tempLable>>labelId>>tempLabel1>>labelId1>>relevence;
+			//map<string,map<string,map<int,map<string,map<int,double>>>>> sceneLabelRelevence;  //保存不同场景中不同物体label下的相关度
+			if(sceneLabelRelevence.count(tempSceneName))
 			{
-				if(sceneLabelRelevence[tempSceneName][tempLable].count(labelId))
+				if(sceneLabelRelevence[tempSceneName].count(tempLable))
 				{
-					if(sceneLabelRelevence[tempSceneName][tempLable][labelId].count(tempLabel1))
+					if(sceneLabelRelevence[tempSceneName][tempLable].count(labelId))
 					{
-						sceneLabelRelevence[tempSceneName][tempLable][labelId][tempLabel1].insert(make_pair(labelId1,relevence));
+						if(sceneLabelRelevence[tempSceneName][tempLable][labelId].count(tempLabel1))
+						{
+							sceneLabelRelevence[tempSceneName][tempLable][labelId][tempLabel1].insert(make_pair(labelId1,relevence));
+						}
+						else
+						{
+							map<int,double> temp;
+							temp.insert(make_pair(labelId1,relevence));
+							sceneLabelRelevence[tempSceneName][tempLable][labelId].insert(make_pair(tempLabel1,temp));
+						}
 					}
 					else
 					{
 						map<int,double> temp;
+						map<string,map<int,double>>temp1;
 						temp.insert(make_pair(labelId1,relevence));
-						sceneLabelRelevence[tempSceneName][tempLable][labelId].insert(make_pair(tempLabel1,temp));
+						temp1.insert(make_pair(tempLabel1,temp));
+						sceneLabelRelevence[tempSceneName][tempLable].insert(make_pair(labelId,temp1));
 					}
 				}
 				else
 				{
 					map<int,double> temp;
 					map<string,map<int,double>>temp1;
+					map<int,map<string,map<int,double>>>temp2;
 					temp.insert(make_pair(labelId1,relevence));
 					temp1.insert(make_pair(tempLabel1,temp));
-					sceneLabelRelevence[tempSceneName][tempLable].insert(make_pair(labelId,temp1));
+					temp2.insert(make_pair(labelId,temp1));
+					sceneLabelRelevence[tempSceneName].insert(make_pair(tempLable,temp2));
 				}
 			}
 			else
@@ -866,30 +954,19 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 				map<int,double> temp;
 				map<string,map<int,double>>temp1;
 				map<int,map<string,map<int,double>>>temp2;
+				map<string,map<int,map<string,map<int,double>>>>temp3;
 				temp.insert(make_pair(labelId1,relevence));
 				temp1.insert(make_pair(tempLabel1,temp));
 				temp2.insert(make_pair(labelId,temp1));
-				sceneLabelRelevence[tempSceneName].insert(make_pair(tempLable,temp2));
+				temp3.insert(make_pair(tempLable,temp2));
+				sceneLabelRelevence.insert(make_pair(tempSceneName,temp3));
 			}
+			line.clear();
+			buffer.clear();
 		}
-		else
-		{
-			map<int,double> temp;
-			map<string,map<int,double>>temp1;
-			map<int,map<string,map<int,double>>>temp2;
-			map<string,map<int,map<string,map<int,double>>>>temp3;
-			temp.insert(make_pair(labelId1,relevence));
-			temp1.insert(make_pair(tempLabel1,temp));
-			temp2.insert(make_pair(labelId,temp1));
-			temp3.insert(make_pair(tempLable,temp2));
-			sceneLabelRelevence.insert(make_pair(tempSceneName,temp3));
-		}
-		line.clear();
-		buffer.clear();
+		in.clear();
+		in.close();
 	}
-	in.clear();
-	in.close();
-
 
 
 	
@@ -965,7 +1042,6 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 
 
 	//**************** 输入场景和现有场景比对部分*********************
-	//map<string,int>sourceSceneLabels;
 	map<string,int>::iterator  siIt= sourceSceneLabels.begin();
 	while ( siIt != sourceSceneLabels.end())
 	{
@@ -989,7 +1065,7 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 
    //*****************读取该场景类别下该模型类别对应的relationship partner****************
 	vector<string> partner;
-	inPath = "SearchResult\\LabelRelevencePMI.txt";
+	inPath = "SearchResult\\AllLabelRelationPartnerSet.txt";
 	in.open(inPath);
 	if(!in)
 	{
@@ -1022,11 +1098,10 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 	}
 
 
-	//******************** 整个场景类别的比对*****************
-	//由于一次推荐的数量有限，所以需要控制数量，当已有推荐label 数目超过一定数量时，则不再启用
-	if(recommendLabelAndWeight.size() <18)
+	//******************** 整个场景类别中所包含的模型类别的比对*****************
+	
+	if(isFirstRecommend) //先读取所有类别场景中的label集合
 	{
-		//先读取所有类别场景中的label集合
 		inPath = "MLData\\AllSceneLableAndCount.txt";	
 		in.open(inPath);
 		if(!in)
@@ -1059,6 +1134,44 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 		in.clear();
 		in.close();
 
+	}
+	
+	//由于一次推荐的数量有限，所以需要控制数量，当已有推荐label 数目超过一定数量时，则不再启用
+	if(recommendLabelAndWeight.size() <18)
+	{
+		////先读取所有类别场景中的label集合
+		//inPath = "MLData\\AllSceneLableAndCount.txt";	
+		//in.open(inPath);
+		//if(!in)
+		//{
+		//	//
+		//}
+		////map<string,map<string,in>>sceneLabelAndCount;
+		//while(!in.eof())
+		//{
+		//	getline(in,buffer);
+		//	istringstream line(buffer);
+		//	line>>tempSceneName>>tempLable>>labelNumb;
+
+		//	if(sceneLabelAndCount.count(tempSceneName))
+		//	{
+		//		if( !sceneLabelAndCount[tempSceneName].count(tempLable))
+		//		{
+		//			sceneLabelAndCount[tempSceneName].insert(make_pair(tempLable,labelNumb));
+		//		}
+		//	}
+		//	else
+		//	{
+		//		map<string,int>temp;
+		//		temp.insert(make_pair(tempLable,labelNumb));
+		//		sceneLabelAndCount.insert(make_pair(tempSceneName,temp));
+		//	}
+		//	line.clear();
+		//	buffer.clear();
+		//}
+		//in.clear();
+		//in.close();
+
 		siIt = sceneLabelAndCount[sceneStyle].begin();
 		while (siIt != sceneLabelAndCount[sceneStyle].end())
 		{
@@ -1071,22 +1184,101 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 	}//if
 
 
-	//用于测试，输出结果
+	//输出结果
+	//string tempRemoveLable;
 	ofstream out;
 	string outPath = "SearchResult\\RecommendLabelResult.txt";
 	out.open(outPath);
 	if(!out)
 	{
-
+		//
 	}
 
 	gyIt = recommendLabelAndWeight.begin();
+	//while( gyIt != recommendLabelAndWeight.end() )
+	//{
+	//	out<<sceneStyle<<" "<<gyIt->first<<" "<<gyIt->second<<endl;
+	//	gyIt++;
+	//}
+
+	//要对非法的label过滤，同时对于一些不需要的label（wall、window等）也要过滤
 	while( gyIt != recommendLabelAndWeight.end() )
 	{
-		out<<sceneStyle<<" "<<gyIt->first<<" "<<gyIt->second<<endl;
-		gyIt++;
+		if(sceneLabelAndCount[sceneStyle].count(gyIt->first) && gyIt->first!= "Wall")
+		{
+			out<<gyIt->first<<" "<<setprecision(8)<<gyIt->second<<endl;
+			gyIt++;
+		}
+		else
+		{
+			recommendLabelAndWeight.erase(gyIt++);
+		}
+		
 	}
 
 	out.close();
+
+	//避免重复初始化等工作
+	isFirstRecommend = false;
 	
+}
+
+/*如果当前为单个模型操作状态，那么必定有某个模型是被绘制了包围盒，selectedObject肯定有效
+ 所以处理过程中需要先将整体状态置为 sceneState，然后将selectedObject置为-1；再重绘
+ 如果本来就sceneState，则什么也不用做
+*/
+void QSceneDisplay::sceneOperationAction()
+{
+	if (sceneDisplayState == ObjectState)
+	{
+		this->selected3DModel = -1;
+		this->sceneDisplayState = SceneState;
+		//this->DrawScene();
+		this->updateGL();
+	}
+}
+
+//用于将场景中某个物体用同类别的模型进行替换
+void QSceneDisplay::exchangeModelAction()
+{
+	sameModelListDialog = new QSameModelListDialog;
+	strstream ss;
+	string temp;
+	//更换模型类别必须在选定某个模型之后进行
+	if(this->sceneDisplayState == ObjectState)
+	{
+		//string selectedLabel = scene->sceneModels[this->selectModel]->tag; 
+		Model* selectModelT = this->scene->GetModel(this->selectModel);
+		string selectedLabel = selectModelT->tag;
+		transform(selectedLabel.begin(),selectedLabel.end(),selectedLabel.begin(),tolower);
+		for(int i = 1; i<19; i++)
+		{
+			ss<<i;
+			ss>>temp;
+			sameModelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+selectedLabel+"\\"+selectedLabel+temp+"\\"+selectedLabel+temp);
+			ss.clear();
+		}
+
+		int modelListDialogWidth = this->width()*0.75;
+		int modelListDialogHeight = this->height()*0.75;
+		sameModelListDialog->DownloadModelImage(modelListDialogWidth,modelListDialogHeight);
+		sameModelListDialog->show();
+	}
+}
+
+// 用于将场景中某个模型删除，事实上是设置成invisible
+void QSceneDisplay::removeModelAction()
+{
+	if(this->sceneDisplayState == ObjectState)
+	{
+         Model* selectModelT = this->scene->GetModel(this->selectModel);
+		 if (selectModelT != NULL)
+		 {
+			 selectModelT->visible = false;
+			 this->sceneDisplayState = SceneState;
+			 this->selectModel = -1;
+			 //this->DrawScene();
+			 this->updateGL();
+		 }
+	}
 }

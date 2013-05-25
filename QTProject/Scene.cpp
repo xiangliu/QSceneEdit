@@ -12,7 +12,7 @@ Scene::Scene(QObject* parent) :QObject(parent)
 	vtextures=NULL;
 	materials=NULL;
 #endif
-	Vsize=Vnsize=modelSize=0;
+	Vsize=Vnsize=modelSize=insertModelSize=allModelSize=0;
 	points=NULL;
 	vnormals=NULL;
 	relationTable=NULL;
@@ -47,6 +47,11 @@ Scene::~Scene(void)
 
 	for (int i=0; i<faces.size();i++)
 		delete faces[i];
+
+	for (int i =0; i< newInsertModels.size(); i++)
+	{
+		delete newInsertModels[i];
+	}
 }
 
 // 读入场景，输入为场景地址
@@ -580,6 +585,7 @@ std::string Scene::FindModelTag( string name )
 void Scene::CompleteModelSetting()
 {
 	modelSize=sceneModels.size();
+	allModelSize = modelSize +insertModelSize; //new added
 	for (int i=0;i<modelSize-1;i++)
 	{
 		sceneModels[i]->faceEnd=sceneModels[i+1]->faceStart;
@@ -795,6 +801,24 @@ void Scene::DrawScene()
 	glFlush();
 }
 
+//用于绘制带有新插入模型的场景
+void Scene::DrawSceneWithNewInsertModel()
+{
+	for (int i=0;i<sceneModels.size();i++)
+	{
+		if(sceneModels[i]->visible)
+			sceneModels[i]->DrawModel();
+	}
+
+	for (int i=0;i<newInsertModels.size();i++)
+	{
+		if(newInsertModels[i]->visible)
+			newInsertModels[i]->DrawNewInseartModel();
+	}
+
+	glFlush();
+}
+
 void Scene::need_bbox()
 {
 	if (Vsize==0) // 没有顶点
@@ -1005,6 +1029,7 @@ void Scene::LightReadRelationFile( string path )
 	in.close();
 
 	this->modelSize = lightSceneModels.size(); //added by liuxiang
+	this->allModelSize = modelSize+ insertModelSize;
 }
 
 //往3D场景中画用于单个模型检索的立方体
@@ -1093,6 +1118,33 @@ void Scene::CalculateModelImportance()
 		{
 			modelImportance[i]+= (float)allLabelRelationSize[i]/(float)maxRelationSize;
 		}
+	}
+
+}
+
+int Scene::GetAllModelSize()
+{
+	return this->sceneModels.size()+ this->newInsertModels.size();
+}
+
+//根据模型的序号来获取模型
+Model* Scene::GetModel(int selectedModel)
+{
+	if (selectedModel < 0)
+	{
+		return NULL;
+	}
+	else if ( selectedModel < sceneModels.size())
+	{
+		return sceneModels[selectedModel];
+	}
+	else if (selectedModel < GetAllModelSize())
+	{
+		return newInsertModels[selectedModel - sceneModels.size()] ;
+	}
+	else
+	{
+		return NULL;
 	}
 
 }

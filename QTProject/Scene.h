@@ -54,7 +54,7 @@ public:
 	vnormal *vnormals;
 	int Vnsize; // 法向个数
 
-	vector<Face*> faces;
+	vector<Face*> faces;  //整个场景的所有面片
 
 #ifdef DefMaterial
 	string mtlPath;
@@ -71,14 +71,19 @@ public:
 	vector<int> mtlMark; // 与usemtlSlice对应，usemtlSlice[i]~~usemtlSlice[i+1]对应的mtl为：mtlMark[i];
 #endif
 
-	int modelSize; // 总模型个数，算上墙壁
+	//所有的modelSize 都不包含非invisible的model
+	int modelSize; // 总模型个数，算上墙壁(这个modelSize仅仅包括原有场景中model的个数)
+	int insertModelSize; //新加入的模型个数
+	int allModelSize;  //用于表示总的模型个数（原油场景的和新插入的，每次只要上面两个之中有一个改变，同时也更新它）
+
 	//Byte* mvisible;  // 该模型是否可见
 	vector<Model*> sceneModels; //场景中的模型
+	vector<Model*> newInsertModels; //往场景中新加入的模型
 	vector<LightModel> lightSceneModels; //added by liuxiang,轻量级的model，用于3D检索
 	vector<float>modelImportance;  //用于记录物体的重要程度：物体包围盒大小、relationship涵盖物体数、相同label个数
 
 	int** relationTable;  // 关系表单
-	map<string,int> ModelMap; // Tag : Model_index
+	map<string,int> ModelMap; // Tag : Model_index;第一个填0
 	map<string,vector<int>> RelationMap; // Tag : Relationship
 	box objectSearchBBox;  //用于检索单个物体摆放至场景中的包围盒
 	box bbox; //整个场景的包围盒
@@ -89,6 +94,7 @@ public:
 public:
     bool readScene(const char* filename);
 	void DrawScene();
+	void DrawSceneWithNewInsertModel(); //用来绘制带有新插入模型的场景
 	void need_bbox();
 	void need_bsphere();
 	void DrawTest();
@@ -105,6 +111,8 @@ public:
 	void BuildRelationTable1(int **relationTable); //added by liuxiang
 	void DrawModelSearchBBox();   //用来往场景中添加用于单个物体检索的立方体
 	void CalculateModelImportance();   //用于计算所有模型的重要程度
+	int GetAllModelSize();  //用于获取场景中原有模型和新加入模型的总数，包括被设置了invisible的模型
+	Model* GetModel(int selectedModel);  //根据模型在modelMap里的序号来获取模型
 	// 辅助操作
 private:
 	// return false,没有找到对应格式处理程序

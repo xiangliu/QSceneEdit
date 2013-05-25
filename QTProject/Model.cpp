@@ -1,5 +1,6 @@
 #include "Model.h"
 #include <fstream>
+#include <sstream>
 using namespace std;
 
 
@@ -28,6 +29,32 @@ Model::~Model(void)
 	}
 	if (mesh!=NULL)
 		delete mesh;
+
+	//*************新定义的关于有google warehouse导入模型的变量****************
+	if(modelFaces.size() != 0)
+	{
+		for (int i = 0 ; i< modelFaces.size(); i++)
+		{
+			delete modelFaces[i];
+		}
+	}
+
+	if(pointVect.size() != 0)
+	{
+		for (int i = 0 ; i< pointVect.size(); i++)
+		{
+			delete pointVect[i];
+		}
+	}
+
+	if(normalVect.size() != 0)
+	{
+		for (int i = 0 ; i< normalVect.size(); i++)
+		{
+			delete normalVect[i];
+		}
+	}
+
 }
 
 void Model::DrawModel()
@@ -53,6 +80,47 @@ void Model::DrawModel()
 			glVertex3f(scene->points[face->v[j]][0],scene->points[face->v[j]][1],scene->points[face->v[j]][2]);
 		}
 	}
+	glEnd(); 
+	glPopMatrix();
+	glFlush();
+}
+
+//绘制新插入的模型
+void Model::DrawNewInseartModel()
+{
+	glPushMatrix();
+	glTranslated(tx,ty,tz);
+	glRotated(yangle,0.0,1.0,0.0);
+	glRotated(xangle,1.0,0.0,0.0);
+	glScalef(scaled,scaled,scaled);
+	glTranslatef(-bsphere.center[0],-bsphere.center[1],-bsphere.center[2]);
+
+	glGetDoublev(GL_MODELVIEW_MATRIX,ModelMatrix);
+	// load名称，方便拾取
+	glLoadName(scene->ModelMap[this->name]);
+	glColor3b(255,0,0);
+	glBegin(GL_TRIANGLES);
+	//for (int i=faceStart;i<faceEnd;i++)
+	//{
+	//	Face* face=scene->faces[i];
+	//	for(int j=0;j<3;j++)
+	//	{
+	//		glNormal3f(scene->vnormals[face->vn[j]][0],scene->vnormals[face->vn[j]][1],scene->vnormals[face->vn[j]][2]);
+	//		glVertex3f(scene->points[face->v[j]][0],scene->points[face->v[j]][1],scene->points[face->v[j]][2]);
+	//	}
+	//}
+
+	for (int i=0;i<modelFaces.size();i++)
+	{
+		for(int j=0;j<3;j++)
+		{
+			vnormal* tv = normalVect[modelFaces[i]->vn[j]];
+			point* tp = pointVect[modelFaces[i]->v[j]];
+			glNormal3f((*tv)[0],(*tv)[1],(*tv)[2]);
+			glVertex3f((*tp)[0],(*tp)[1],(*tp)[2]);
+		}
+	}
+
 	glEnd();
 	glPopMatrix();
 	glFlush();
@@ -70,6 +138,21 @@ void Model::need_bbox()
 	bbox.valid=true;
 }
 
+void Model::need_bbox_newInseartOBJ()
+{
+	if(pointVect.size()==0) //没有面片
+		return;
+
+	point* tt;
+	for (int i = 0 ; i<pointVect.size(); i++)
+	{
+		tt= pointVect[i];
+		bbox += *tt;
+	}
+
+	bbox.valid=true;
+}
+
 void Model::need_bsphere()
 {
 	if(pointMap.size()==0) //没有面片
@@ -82,6 +165,26 @@ void Model::need_bsphere()
 	map<int,point>::iterator it;
 	for(it=pointMap.begin();it!=pointMap.end();it++)
 		mb.check_in(it->second);
+	mb.build();
+	bsphere.center=mb.center();
+	bsphere.r=sqrt(mb.squared_radius());
+	bsphere.valid=true;
+}
+
+void Model::need_bsphere_newInseartOBJ()
+{
+	if(pointVect.size()==0) //没有面片
+		return;
+
+	Miniball<3,float> mb;
+
+	point* tt;
+	for (int i = 0 ; i<pointVect.size(); i++)
+	{
+		tt= pointVect[i];
+		mb.check_in(*tt);
+	}
+
 	mb.build();
 	bsphere.center=mb.center();
 	bsphere.r=sqrt(mb.squared_radius());
@@ -368,10 +471,16 @@ void Model::PCAOperation()
 void Model::DrawTrimesh()
 {
 	glPushMatrix();
+
 	//glTranslated(tx,ty,tz);
 	//glRotated(yangle,0.0,1.0,0.0);
 	//glRotated(xangle,1.0,0.0,0.0);
 	//glScalef(scale,scale,scale);
+
+	glTranslated(tx,ty,tz);
+	glRotated(yangle,0.0,1.0,0.0);
+	glScalef(scaled,scaled,scaled);
+
 	glTranslatef(-mesh->bsphere.center[0],-mesh->bsphere.center[1],-mesh->bsphere.center[2]);
 	glBegin(GL_TRIANGLES);
 	for(int i=0;i<mesh->faces.size();i++)
@@ -411,4 +520,224 @@ float Model::GetRand(int type)
 void Model::EndRand()
 {
     //gsl_qrng_free(qRand);
+}
+
+
+//自己写的read obj模型的方法，trimesh无法读取此类模型的obj文件（单个从google warehouse中download的模型）
+void Model::ReadOBJ(string filePath)
+{
+	ifstream input(filePath);
+	if (!input)
+	{
+		cerr<<"error: unable to open input file: "<<input<<endl;
+		return ;
+	}
+
+	string buffer;
+	string objName;
+	int countV=0,countN=0;
+
+	//用于临时保存模型的point和normal，以便后续将其保存至face之中
+	//vector<point> tempPointVect;
+	//vector<vnormal> tempNormalVect;
+	point* tp;  //临时变量
+	vnormal* tv; //临时变量
+
+	// 用于拆分多个顶点构成的face
+	vector<int> thisv;
+	vector<int> thisvn;
+
+#ifdef DefMaterial
+	vector<int> thisvt;
+	int countT=0;
+#endif
+	
+	//// 解析 group标签
+	//string curModelName;  // 当前模型的名称Name
+
+	while (!input.eof())
+	{
+		getline(input,buffer);
+		istringstream line(buffer);
+		string temp;
+		string f1,f2,f3;
+
+		if(buffer.substr(0,3) == "vn ")  {
+			line>> temp>> f1>> f2>> f3;
+			//vnormals[countN][0] = atof(f1.c_str());
+			//vnormals[countN][1] = atof(f2.c_str());
+			//vnormals[countN][2] = atof(f3.c_str());
+			//++countN;
+			tv = new vnormal;
+			(*tv)[0] =  atof(f1.c_str());
+			(*tv)[1] =  atof(f2.c_str());
+			(*tv)[2] =  atof(f3.c_str());
+			normalVect.push_back(tv);
+		}
+		else if(buffer.substr(0,2) == "v ")  {
+			line>> temp>> f1>> f2>> f3;
+			/*points[countV][0] = atof(f1.c_str());
+			points[countV][1] = atof(f2.c_str());
+			points[countV][2] = atof(f3.c_str());
+			++countV;*/
+			tp = new point;
+			(*tp)[0] = atof(f1.c_str());
+			(*tp)[1] = atof(f2.c_str());
+			(*tp)[2] = atof(f3.c_str());
+			pointVect.push_back(tp);
+		}
+#ifndef DefMaterial
+		else if (buffer.substr(0,2)=="f ")
+		{
+			thisv.clear();
+			thisvn.clear();
+
+			const char *c=buffer.c_str();
+			while (1) {
+				while (*c && *c != '\n' && !isspace(*c))
+					c++;
+				while (*c && isspace(*c))
+					c++;
+				int v,vn,vt;
+				if (sscanf(c, "%d/%d/%d", &v,&vt,&vn) != 3)
+					break;
+				v--;
+				vn--;
+				thisv.push_back(v);
+				thisvn.push_back(vn);
+			}
+			//tess(thisv,thisvn);
+			ModelTess(thisv,thisvn);
+		}
+#endif
+#ifdef DefMaterial
+		else if (buffer.substr(0,2)=="f ")
+		{
+			thisv.clear();
+			thisvn.clear();
+			thisvt.clear();
+
+			const char *c=buffer.c_str();
+			while (1) {
+				while (*c && *c != '\n' && !isspace(*c))
+					c++;
+				while (*c && isspace(*c))
+					c++;
+				int v,vn,vt;
+				if (sscanf(c, "%d/%d/%d", &v,&vt,&vn) != 3)
+					break;
+				v--;
+				vt--;
+				vn--;
+				thisv.push_back(v);
+				thisvn.push_back(vn);
+				thisvt.push_back(vt);
+			}
+			tess(thisv,thisvt,thisvn);
+		}
+		else if(buffer.substr(0,3) == "vt ")  {
+			line >> temp >> f1 >> f2;
+			vtextures[countT][0] = atof(f1.c_str());
+			vtextures[countT][1] = atof(f2.c_str());
+			++countT;
+		}
+		else if (buffer.substr(0,7)=="usemtl ")
+		{
+			string name; // usemtl name;
+			line>>temp>>name;
+			usemtlSlice.push_back(faces.size());
+
+			int sc=0;
+			for (;sc<MtlSize;sc++)
+			{
+				if(name==materials[sc].name)
+					break;
+			}
+			mtlMark.push_back(sc);
+		}
+		else if (buffer.substr(0,7)=="mtllib ")
+		{
+			// temp=mtllib  f1=纹理地址
+			line>>temp>>mtlPath; 
+			LoadMtl(mtlPath);
+		}
+#endif // DefMaterial
+		//else if (buffer.substr(0,2)=="g ")
+		//{
+		//	line>>temp>>f1>>f2;  // 清除g Mesh的影响，f2包含物体名称
+		//	// 处理Model Name
+		//	vector<string> elements;
+		//	split(f2,'_',elements);
+		//	int eleSize=elements.size();
+		//	string temp=elements[eleSize-1]; // 最后一个肯定是物体标签
+		//	if (temp==curModelName)
+		//		continue;
+		//	else
+		//	{
+		//		//				sceneModels[sceneModels.size()-1].faceEnd=faces.size();
+		//		Model *model=new Model;
+		//		model->faceStart=faces.size();
+		//		model->name=curModelName=temp;
+		//		model->tag=FindModelTag(temp);
+		//		ModelMap.insert(pair<string,int>(model->name,(sceneModels.size())));
+		//		sceneModels.push_back(model);
+		//	}
+		//}
+	}
+
+#ifdef DefMaterial
+	usemtlSlice.push_back(INT_MAX);
+#endif
+
+	input.close();
+	//CompleteModelSetting();
+}
+
+//改写的trimesh方法tess
+void Model::ModelTess(const vector<int> &thisv,const vector<int> &thisvn)
+{
+	if(thisv.size()<3)
+		return;
+	if (thisv.size()==3)
+	{
+		Face* face=new Face;
+		// 顶点
+		face->v[0]=thisv[0];
+		face->v[1]=thisv[1];
+		face->v[2]=thisv[2];
+
+		face->vn[0]=thisvn[0];
+		face->vn[1]=thisvn[1];
+		face->vn[2]=thisvn[2];
+
+		//faces.push_back(face);
+		modelFaces.push_back(face);
+
+	/*	sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[0],points[face->v[0]]));
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[1],points[face->v[1]]));
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[2],points[face->v[2]]));*/
+
+		return;
+	}
+
+	for(int i=2;i<thisv.size();i++)
+	{
+		Face *face=new Face;
+		// 顶点
+		face->v[0]=thisv[0];
+		face->v[1]=thisv[i-1];
+		face->v[2]=thisv[i];
+
+		// 法向
+		face->vn[0]=thisvn[0];
+		face->vn[1]=thisvn[i-1];
+		face->vn[2]=thisvn[i];
+
+		//faces.push_back(face);
+		modelFaces.push_back(face);
+		
+		/*sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[0],points[face->v[0]]));
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[1],points[face->v[1]]));
+		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[2],points[face->v[2]]));*/
+	}
 }

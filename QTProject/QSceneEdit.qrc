@@ -2,19 +2,15 @@
     <qresource prefix="/">
         <file>image/open.png</file>
         <file>image/save.png</file>
-        <file>image/choose.png</file>
-        <file>image/obj_trans.png</file>
-        <file>image/trans.png</file>
-        <file>image/rotate.png</file>
-        <file>image/obj_rotate.png</file>
         <file>image/segment.png</file>
         <file>image/pickup.png</file>
         <file>image/brush.png</file>
         <file>image/eraser.png</file>
         <file>image/relationship.png</file>
-        <file>image/display.png</file>
+        <file>image/sceneOperation.png</file>
         <file>image/search.png</file>
-        <file>image/contextSearch.png</file>
-        <file>image/SearchInseatObject.png</file>
+        <file>image/recommend.png</file>
+        <file>image/removeObject.png</file>
+        <file>image/exchange.png</file>
     </qresource>
 </RCC>

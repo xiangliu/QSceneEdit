@@ -17,6 +17,7 @@
 #include <iostream>
 #include <fstream>
 #include <strstream>
+#include <sstream>
 #include <map>
 using namespace std;
 
@@ -693,11 +694,13 @@ void MainWindow::Search3DScenes()
 				break;
 		}
 		
+		//sceneDisplayWidget->sceneStyle = "bedroom";
+
 		//****************检索3D场景********************
-		//int resultSum = 8;
+		int resultSum = 8;
 		////检索
 		////(int resultSum = Search3DSceneFromBuffer(twdScene,this->relationship,err,pSceneMatResult);)//原有不是用calssify的方法
-		int resultSum = Search3DSceneFromBufferWithClassify(sceneClass,twdScene,this->relationship,err,pSceneMatResult);
+		//int resultSum = Search3DSceneFromBufferWithClassify(sceneClass,twdScene,this->relationship,err,pSceneMatResult);
 		//if(!resultSum)
 		//{
 		//	//QMessageBox::warning(this,tr("Scenes Search"),tr("Search failed!"),QMessageBox::Yes);
@@ -767,58 +770,74 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 		this->entireState = threeDProcess;
 
 	    //*********准备3D场景显示和编辑相关的工作**************
-
 		//create action
 		saveSceneAction=new QAction(QIcon(":/image/save.png"),tr("保存场景"),this);
 		connect(saveSceneAction,SIGNAL(triggered()),this,SLOT(SaveSceneFile()));
 
-		chooseModelAction=new QAction(QIcon(":/image/choose.png"),tr("选择模型"),this);
-		connect(chooseModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+		sceneOperationAction = new QAction(QIcon(":/image/sceneOperation.png"),tr("场景整体操作"),this);
+		connect(sceneOperationAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(sceneOperationAction()));
 
-		transModelAction=new QAction(QIcon(":/image/obj_trans.png"),tr("平移物体"),this);
-		connect(transModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(TransModelAction()));
+		recommendAction = new QAction(QIcon(":/image/recommend.png"),tr("模型推荐"),this);
+		connect(recommendAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(searchInseartObject()));
 
-		rotateModelAction=new QAction(QIcon(":/image/obj_rotate.png"),tr("旋转物体"),this);
-		connect(rotateModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(RotateModelAction()));
+		exchangeModelAction = new QAction(QIcon(":/image/exchange.png"),tr("模型变换"),this);
+		connect(exchangeModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(exchangeModelAction()));
 
-		transSceneAction=new QAction(QIcon(":/image/trans.png"),tr("平移场景"),this);
-		connect(transSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+		removeModelAction  = new QAction(QIcon(":/image/removeObject.png"),tr("模型移除"),this);
+		connect(removeModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(removeModelAction()));
+		
+		//chooseModelAction=new QAction(QIcon(":/image/choose.png"),tr("选择模型"),this);
+		//connect(chooseModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
 
-		rotateSceneAction=new QAction(QIcon(":/image/rotate.png"),tr("旋转场景"),this);
-		connect(rotateSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+		//transModelAction=new QAction(QIcon(":/image/obj_trans.png"),tr("平移物体"),this);
+		//connect(transModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(TransModelAction()));
 
-		//原本用于添加检索输入框，后被改成用于更换某类模型
-		pickupCubeAction = new QAction(QIcon(":/image/contextSearch.png"),tr("添加物体检索框"),this);
-		connect(pickupCubeAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(pickupCubeAction()));
+		//rotateModelAction=new QAction(QIcon(":/image/obj_rotate.png"),tr("旋转物体"),this);
+		//connect(rotateModelAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(RotateModelAction()));
 
-		searchInseartObjectAction = new QAction(QIcon(":/image/SearchInseatObject.png"),tr("查找物体"),this);
-		connect(searchInseartObjectAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(searchInseartObject()));
+		//transSceneAction=new QAction(QIcon(":/image/trans.png"),tr("平移场景"),this);
+		//connect(transSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+
+		//rotateSceneAction=new QAction(QIcon(":/image/rotate.png"),tr("旋转场景"),this);
+		//connect(rotateSceneAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+
+		////原本用于添加检索输入框，后被改成用于更换某类模型
+		//pickupCubeAction = new QAction(QIcon(":/image/contextSearch.png"),tr("添加物体检索框"),this);
+		//connect(pickupCubeAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(pickupCubeAction()));
+
+		//searchInseartObjectAction = new QAction(QIcon(":/image/SearchInseatObject.png"),tr("查找物体"),this);
+		//connect(searchInseartObjectAction,SIGNAL(triggered()),sceneDisplayWidget,SLOT(searchInseartObject()));
 
 		//add menu
 		fileMenu->addAction(saveSceneAction);  //这个是在文件菜单那一栏，比较特殊一点
 
 		modelEditMenu=ui->menuBar->addMenu(tr("模型编辑"));
-		modelEditMenu->addAction(chooseModelAction);
-		modelEditMenu->addAction(transModelAction);
-		modelEditMenu->addAction(rotateModelAction);
+		modelEditMenu->addAction(recommendAction);
+		modelEditMenu->addAction(removeModelAction);
+		modelEditMenu->addAction(exchangeModelAction);
 
 		sceneEditMenu=ui->menuBar->addMenu(tr("场景编辑"));
-		sceneEditMenu->addAction(transSceneAction);
-		sceneEditMenu->addAction(rotateSceneAction);
+		sceneEditMenu->addAction(sceneOperationAction);
+		//sceneEditMenu->addAction(rotateSceneAction);
 
 		//create toolbar
 		fileToolBar->addAction(saveSceneAction);
 
 		editModelToolBar=addToolBar(tr("模型编辑"));
-		editModelToolBar->addAction(pickupCubeAction);
-		editModelToolBar->addAction(searchInseartObjectAction);
-		editModelToolBar->addAction(chooseModelAction);
-		editModelToolBar->addAction(transModelAction);
-		editModelToolBar->addAction(rotateModelAction);
+		editModelToolBar->addAction(recommendAction);
+		editModelToolBar->addAction(exchangeModelAction);
+		editModelToolBar->addAction(removeModelAction);
+		
+		//editModelToolBar->addAction(pickupCubeAction);
+		//editModelToolBar->addAction(searchInseartObjectAction);
+		//editModelToolBar->addAction(chooseModelAction);
+		//editModelToolBar->addAction(transModelAction);
+		//editModelToolBar->addAction(rotateModelAction);
 
 		editSceneToolBar=addToolBar(tr("场景编辑"));
-		editSceneToolBar->addAction(transSceneAction);
-		editSceneToolBar->addAction(rotateSceneAction);
+		editSceneToolBar->addAction(sceneOperationAction);
+		//editSceneToolBar->addAction(transSceneAction);
+		//editSceneToolBar->addAction(rotateSceneAction);
 
 		//create connection
 		connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));

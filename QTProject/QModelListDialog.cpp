@@ -198,6 +198,7 @@ void QModelListDialog::mouseDoubleClickEvent(QMouseEvent *event)
 	this->selectedModle = b*6+ a;
 
 	//在记录用户选择之后，调用accept函数，发射关于选择的signal，同时关闭dialog
+	//Inseart3DModel(selectedModle);
 	this->accept();
 }
 

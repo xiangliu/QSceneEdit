@@ -117,17 +117,26 @@ public:
 	QToolBar *editSceneToolBar;  //用于编辑整个3D场景
 	
 	// 相关操作
+	//场景相关
 	QAction *openSceneAction;
 	QAction *saveSceneAction;
+	QAction *sceneOperationAction;  //通过点击按钮进入场景操作状态
 
-	QAction *chooseModelAction;
-	QAction *transModelAction;
-	QAction *rotateModelAction;
-	QAction *scaleModelAction;
+	//action related with edit 3D scene object
+	//QAction *pickupCubeAction;
+	QAction *recommendAction;      //进行模型推荐
+	QAction *exchangeModelAction;  //改变模型的外形
+	QAction *removeModelAction;  //将某个模型设置成invisible
 
-	QAction *transSceneAction;
-	QAction *rotateSceneAction;
-	QAction *scaleSceneAction;
+
+	//QAction *chooseModelAction;
+	//QAction *transModelAction;
+	//QAction *rotateModelAction;
+	//QAction *scaleModelAction;
+
+	//QAction *transSceneAction;
+	//QAction *rotateSceneAction;
+	//QAction *scaleSceneAction;
 
 	//action related with image
 	QAction *segImageAction;
@@ -138,15 +147,7 @@ public:
 	//action related with search
 	QAction *createRelationAction;
 	QAction *searchSceneAction;
-	QAction *view3DSceneAction;
-
-	//action related with edit 3D scene
-	QAction *pickupCubeAction;
-	QAction *searchInseartObjectAction;
-	//这些都可以共用对单个物体进行编辑的菜单
-	//QAction *transformCubeAction;  
-	//QAction *rotateCubeAction;
-	//QAction *scaleCubeAction;
+	//QAction *view3DSceneAction;
 
 	//represent the file to be paint
 	int selcted3DScene; //用于记录用户在3D scene List中的选择
