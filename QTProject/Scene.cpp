@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include "trimesh/vec.h"
+#include "3DFeatureExtract/glut.h"
 
 Scene::Scene(QObject* parent) :QObject(parent)
 {
@@ -173,6 +174,31 @@ bool Scene::read_obj(const char* filename)
 			}
 			tess(thisv,thisvn);
 		}
+		//*********************** begin of 试材质新加入的部分***************************
+		else if (buffer.substr(0,7)=="usemtl ")
+		{
+			string name; // usemtl name;
+			line>>temp>>name;
+			usemtlSlice.push_back(faces.size());
+
+			int sc=0;
+			for (;sc<MtlSize;sc++)
+			{
+				if(name==materials[sc].name)
+					break;
+			}
+			mtlMark.push_back(sc);
+		}
+		else if (buffer.substr(0,7)=="mtllib ")
+		{
+			// temp=mtllib  f1=纹理地址
+			line>>temp>>mtlPath; 
+
+			//此处必须重新构造filepath，因为单纯这个path应该是读不到的
+			//由于mtl的path貌似和obj的名字一样，只是后缀名不同，所以暂时就修改下原有的后缀名就ok了
+			LoadMtl(dirPath+mtlPath);
+		}
+		//***********************end of试材质新加入的部分***************************
 #endif
 #ifdef DefMaterial
 		else if (buffer.substr(0,2)=="f ")
@@ -507,6 +533,7 @@ void Scene::tess( const vector<int> &thisv,const vector<int> &thisvt,const vecto
 		sceneModels[sceneModels.size()-1]->pointMap.insert(pair<int,point>(face->v[2],points[face->v[2]]));
 	}
 }
+#endif
 
 void Scene::LoadMtl( string mtlPath )
 {
@@ -574,7 +601,7 @@ void Scene::LoadMtl( string mtlPath )
 	}
 	mtlin.close();
 }
-#endif
+
 
 std::string Scene::FindModelTag( string name )
 {
@@ -802,13 +829,14 @@ void Scene::DrawScene()
 }
 
 //用于绘制带有新插入模型的场景
-void Scene::DrawSceneWithNewInsertModel()
+void Scene::DrawSceneWithNewInsertModel( GLuint texName )
 {
 	for (int i=0;i<sceneModels.size();i++)
 	{
 		if(sceneModels[i]->visible)
 			sceneModels[i]->DrawModel();
 	}
+	//glutSolidSphere(30.0, 20, 16);
 
 	for (int i=0;i<newInsertModels.size();i++)
 	{
@@ -816,6 +844,7 @@ void Scene::DrawSceneWithNewInsertModel()
 			newInsertModels[i]->DrawNewInseartModel();
 	}
 
+	DrawFloor(texName);   //绘制floor
 	glFlush();
 }
 
@@ -1147,6 +1176,180 @@ Model* Scene::GetModel(int selectedModel)
 		return NULL;
 	}
 
+}
+
+//为了显示效果新增的floor绘制
+void Scene::DrawFloor(GLuint texName)
+{
+	if ( !bbox.valid )
+	{
+		this->need_bbox(); //这个bbox的计算没有算入新添加的模型
+	}
+
+	vec floorMinCoordinat = bbox.min;
+	vec floorMaxCoordinat = bbox.max;
+	floorMaxCoordinat[1] = floorMinCoordinat[1] ; //将y方向的厚度设置成10
+	//floorMinCoordinat[1] -= 10.0;   //原本想设置floor厚度为10
+	DrawFloorHelp(floorMinCoordinat,floorMaxCoordinat,texName);
+
+    /*
+	glPushMatrix();
+
+	
+	//glMultMatrixd(ModelMatrix);
+	glColor3f(0,1.0,1.0);
+	//glBegin(GL_LINE_STRIP);
+	glBegin(GL_POLYGON);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glEnd();
+
+	//glBegin(GL_LINE_STRIP);
+	glBegin(GL_POLYGON);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glEnd();
+
+	//glBegin(GL_LINE_STRIP);
+	glBegin(GL_POLYGON);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMinCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glEnd();
+
+	//glBegin(GL_LINE_STRIP);
+	glBegin(GL_POLYGON);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMinCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glEnd();
+	glPopMatrix();
+	*/
+}
+
+
+//extern GLuint texName;
+
+//辅助绘制floor的函数
+void Scene::DrawFloorHelp(vec MinV, vec MaxV,GLuint texName)
+{
+	GLfloat mat_ambient[]={1.0, 1.0,0.6,1.0};
+	GLfloat mat_diffuse[]={1.0, 1.0,0.6,1.0};
+	GLfloat mat_specular[] = {0.0, 0.0, 0.0, 1.0 };  //材质相关设定
+	GLfloat mat_shininess[] = {5.0};
+
+	glMaterialfv(GL_FRONT,GL_AMBIENT,mat_ambient);
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_diffuse);
+	glMaterialfv(GL_FRONT,GL_SPECULAR,mat_specular);
+	glMaterialfv(GL_FRONT,GL_SHININESS,mat_shininess);
+
+
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glBindTexture(GL_TEXTURE_2D, texName);
+	//底面
+	glBegin(GL_POLYGON);
+	glNormal3f(0, 1, 0);
+	glTexCoord2f(0, 0);
+	glVertex3f(MinV[0],MinV[1],MinV[2]);
+
+	glNormal3f(0, 1, 0);
+	glTexCoord2f(2, 0);
+	glVertex3f(MaxV[0],MinV[1],MinV[2]);
+	
+	glNormal3f(0, 1, 0);
+	glTexCoord2f(2, 2);
+	glVertex3f(MaxV[0],MinV[1],MaxV[2]);
+	
+	glNormal3f(0, 1, 0);
+	glTexCoord2f(0, 2);
+	glVertex3f(MinV[0],MinV[1],MaxV[2]);
+	
+	glEnd();
+
+	glDisable(GL_TEXTURE_2D);
+
+	//glColor3f(1.0, 1.0, 1.0);
+
+	/*
+	glBegin(GL_POLYGON);
+	glVertex3f(MinV[0],MinV[1],MinV[2]);
+	glVertex3f(MinV[0],MinV[1],MinV[2]);
+	glVertex3f(MinV[0],MinV[1],MinV[2]);
+	glVertex3f(MinV[0],MinV[1],MinV[2]);
+	glEnd();
+	*/
+	/*
+	//glBegin(GL_LINE_STRIP);
+	glBegin(GL_POLYGON);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glEnd();
+
+	//glBegin(GL_LINE_STRIP);
+	glBegin(GL_POLYGON);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glEnd();
+
+	//glBegin(GL_LINE_STRIP);
+	glBegin(GL_POLYGON);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMinCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMinCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMaxCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glEnd();
+
+	//glBegin(GL_LINE_STRIP);
+	glBegin(GL_POLYGON);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMinCoordinat[1],floorMinCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMinCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMaxCoordinat[2]);
+	glVertex3f(floorMinCoordinat[0],floorMaxCoordinat[1],floorMinCoordinat[2]);
+	glEnd();
+	glPopMatrix();
+	*/
+}
+
+//生成模型对应的tag 和在vector中所在位置的对应变量
+void Scene::GenerateModelTagPosition()
+{
+	if (sceneModels.size()== 0 )
+	{
+		return ;
+	}
+
+	for (int i = 0; i< sceneModels.size(); i++)
+	{
+		if (ModelTagePositon.count( sceneModels[i]->tag))
+		{
+			ModelTagePositon[sceneModels[i]->tag].push_back(i);
+		}
+		else
+		{
+			vector<int> temp;
+			temp.push_back(i);
+			ModelTagePositon.insert(make_pair(sceneModels[i]->tag,temp));
+		}
+	}
 }
 
 

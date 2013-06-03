@@ -841,7 +841,7 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 
 		//create connection
 		connect(this,SIGNAL(SetDisScene(Scene*)),sceneDisplayWidget,SLOT(SetDisScene(Scene*)));
-		connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
+		//connect(this,SIGNAL(SetChooseMode()),sceneDisplayWidget,SLOT(ChooseModelAction()));
 		
 		//1.获取场景,如果失败则用message提示
 		string temp1 = string(this->pSceneMatResult[this->selcted3DScene].name)+".obj";

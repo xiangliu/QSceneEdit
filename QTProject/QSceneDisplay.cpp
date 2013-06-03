@@ -50,26 +50,105 @@ void QSceneDisplay::initializeGL()
 	glDepthFunc(GL_LEQUAL);
 }
 
+//GLubyte checkImage[64][64][4];
+void QSceneDisplay::makeCheckImage()
+{
+	for(int i = 0; i < 64; i++)
+	{
+		for(int j = 0;j < 64; j++)
+		{
+			int c = (((i&0x8)==0)^((j&0x8)==0)) *255;
+			checkImage[i][j][0]= c;
+			checkImage[i][j][1]= c;
+			checkImage[i][j][2]= c;
+			checkImage[i][j][3]= 255;
+		}
+	}
+}
+
+
 void QSceneDisplay::paintGL()
 {
+	if(scene==NULL)
+		return;
 	glEnable(GL_DEPTH_TEST);
+
+	//定义地板材质相关
+	makeCheckImage();
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glGenTextures(1, &texName);
+	glBindTexture(GL_TEXTURE_2D, texName);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkImage);
+	
+
 	glClearColor(1,1,1,1);
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+	//用于控制绘制中指定两点间其它点的颜色过渡模式
 	//glShadeModel(GL_FLAT);
 	glShadeModel(GL_SMOOTH);
-	GLfloat light_ambient[] = { 1.0, 1.0, 1.0, 1.0 };//环境光颜色
-	GLfloat light_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };//漫反射光颜色
-	GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };//镜面反思光颜色
-	GLfloat light_position[] = { 9999.0, 9999.0, 9999.0, 0.0 };//光源位置
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	GLfloat mat_ambient[]={0.6,0.6,0.6,1.0};
+	GLfloat mat_diffuse[]={0.8,0.8,0.8,1.0};
+	GLfloat mat_specular[] = {0.0, 0.0, 0.0, 1.0 };  //材质相关设定
+	GLfloat mat_shininess[] = {5.0};
+
+	GLfloat light_ambient[] = { 0.2, 0.2, 0.2, 1.0 };//环境光颜色，钱三个值为RGB值，第三个为透明度
+	GLfloat light_diffuse[] = { 0.5, 0.5, 0.5, 1.0 };//漫反射光颜色
+	GLfloat light_specular[] = { 0.1, 0.1, 0.1, 1.0 };//镜面反射光颜色
+	GLfloat light_position[] = { 10.0, 10.0, 10.0, 1.0 };//光源位置
+	light_position[0]= scene->bsphere.center[0];
+	light_position[1]= scene->bsphere.center[1]+2*scene->bsphere.r;
+	light_position[2]= scene->bsphere.center[2];
+
+	GLfloat Light_Model_Ambient[] = {0.2,0.2,0.2,1.0}; //默认的全局环境光
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT,Light_Model_Ambient);  // 设置全局环境光
+
+	glMaterialfv(GL_FRONT,GL_AMBIENT,mat_ambient);
+	glMaterialfv(GL_FRONT,GL_DIFFUSE,mat_diffuse);
+	glMaterialfv(GL_FRONT,GL_SPECULAR,mat_specular);
+	glMaterialfv(GL_FRONT,GL_SHININESS,mat_shininess);
+
 	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);//设置环境光
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);//设置漫反射光
-	glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);//设置镜面反射光
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);//设置镜面反射光
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);//设置光源位置
-	glEnable(GL_LIGHTING);//打开光线
-	glEnable(GL_LIGHT0);//打开0号光源
-	glEnable(GL_DEPTH_TEST);//打开深度测试
 
-	glDepthFunc(GL_LEQUAL);							// 所作深度测试的类型
+	//GLfloat spot_direction[]={0.0, -1.0, 0.0,};
+	//glLightfv(GL_LIGHT0,GL_SPOT_DIRECTION,spot_direction);
+	//glLightf(GL_LIGHT0,GL_SPOT_EXPONENT,45.0);  //设置一个聚光灯试试
+
+
+	//GLfloat light_position1[] = { 10.0, 10.0, 10.0, 0.0 };//光源位置
+	//light_position1[0]= scene->bsphere.center[0];//+0.3*scene->bsphere.r;
+	//light_position1[1]= scene->bsphere.center[1];//+2*scene->bsphere.r;
+	//light_position1[2]= scene->bsphere.center[2];
+	//glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient);//设置环境光
+	//glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);//设置漫反射光
+	//glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular);//设置镜面反射光
+	//glLightfv(GL_LIGHT1, GL_POSITION, light_position1);//设置光源位置
+
+	//GLfloat spot_direction1[]={0.0, -1.0, 1.0,};
+	//glLightfv(GL_LIGHT1,GL_SPOT_DIRECTION,spot_direction1);
+	//glLightf(GL_LIGHT1,GL_SPOT_EXPONENT,45.0);  //设置一个聚光灯试试
+	
+	glEnable(GL_LIGHTING);//打开光线（即表明是否允许光照）
+	glEnable(GL_LIGHT0);//打开0号光源
+	//glEnable(GL_LIGHT1);//打开0号光源
+
+	//glEnable(GL_COLOR_MATERIAL); //允许颜色材质
+	
+     glDepthFunc(GL_LESS);
+	//glDepthFunc(GL_LEQUAL);							// 所作深度测试的类型
+	glEnable(GL_DEPTH_TEST);//打开深度测试
+	
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);			// 真正精细的透视修正
 
 	glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
@@ -79,8 +158,6 @@ void QSceneDisplay::paintGL()
 
 	glOrtho(plane[0],plane[1],plane[2],plane[3],-10000,10000);
 
-	if(scene==NULL)
-		return;
 	gluLookAt(eye[0],eye[1],eye[2],scene->bsphere.center[0],scene->bsphere.center[1],scene->bsphere.center[2],up[0],up[1],up[2]);
 
 	DrawScene();
@@ -194,6 +271,7 @@ void QSceneDisplay::mouseDoubleClickEvent(QMouseEvent *event)
 			this->sceneDisplayState = ObjectState; //进入拾取阶段,表明拾取到了物体
 		}
 	}
+
 	this->updateGL();
 }
 
@@ -345,7 +423,7 @@ void QSceneDisplay::DrawScene()
 	//}
 
 	//新的绘制模型和包围盒方法
-	scene->DrawSceneWithNewInsertModel();
+	scene->DrawSceneWithNewInsertModel(texName);
 	
 	if ( selectModel<0 )
 	{
@@ -524,6 +602,12 @@ void QSceneDisplay::searchInseartObject()
 		}
 	}
 
+	//避免上次推荐数据给当前推荐产生干扰
+	if (recomendModelLabel.size())
+	{
+		recomendModelLabel.clear();
+	}
+
 	string toLowerCase;
 	map<double,string>::reverse_iterator recoIt1 = tempRecommend.rbegin();
 	if(tempRecommend.size() >= 18)
@@ -533,6 +617,11 @@ void QSceneDisplay::searchInseartObject()
 		{
 			toLowerCase = recoIt1->second;
 			out<<toLowerCase<<endl;
+			if (toLowerCase[0] >= 'a' )
+			{
+				toLowerCase[0] -=32;
+			}
+			recomendModelLabel.push_back(toLowerCase);
 			transform(toLowerCase.begin(),toLowerCase.end(),toLowerCase.begin(),tolower);
 			//modelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+recoIt1->second+"\\"+recoIt1->second+"1");
 			modelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+toLowerCase+"\\"+toLowerCase+"1"+"\\"+toLowerCase+"1");
@@ -561,7 +650,7 @@ void QSceneDisplay::generateInseartModleInformation(Model* insertModel)
 	//用于给新插入的模型命名
 	strstream ss;
 	string tempModelSize;
-	ss<<this->scene->modelSize;
+	ss<<this->scene->GetAllModelSize();
 	ss>>tempModelSize;
 	insertModel->name = "inseartModel"+tempModelSize;
 	insertModel->scene = scene;
@@ -576,7 +665,8 @@ void QSceneDisplay::generateInseartModleInformation(Model* insertModel)
 	float tempLength1 = insertModel->bbox.size().sumabs();  //求对角线的平方
 	float sceneLength = scene->bbox.size().sumabs();
 	sizeScale = sceneLength/(tempLength1*2.0);
-	insertModel->scaled = sizeScale;
+	CalculateModelSizeRatio(insertModel);
+	//insertModel->scaled = sizeScale;
 	//insertModel->scaled = 1.0;
 
 	insertModel->need_bsphere_newInseartOBJ();
@@ -584,6 +674,37 @@ void QSceneDisplay::generateInseartModleInformation(Model* insertModel)
 	insertModel->tx =( scene->bbox.center() - insertModel->bbox.center())[0];
 	insertModel->ty =( scene->bbox.center() - insertModel->bbox.center())[1];
 	insertModel->tz =( scene->bbox.center() - insertModel->bbox.center())[2];
+}
+
+
+ //为exchange的模型计算模型相关信息
+void QSceneDisplay::generateExchangeModleInformation(Model* exchangeModel)
+{
+	//用于给新插入的模型命名
+	strstream ss;
+	string tempModelSize;
+	ss<<this->scene->GetAllModelSize();
+	ss>>tempModelSize;
+	exchangeModel->name = "inseartModel"+tempModelSize;
+	exchangeModel->scene = scene;
+	//insertModel->need_bbox();//此处不再使用，因为仅仅适应于场景内的物体，单独的物体还是用trimesh自带方法计算
+	exchangeModel->need_bbox_newInseartOBJ();
+
+	exchangeModel->visible = true;
+
+	Model* oldModel = this->scene->GetModel(selectModel);
+
+	//float sizeScale;  //计算模型伸缩比例大小(直接使用高度比例的大小)
+	float tempLength1 = exchangeModel->bbox.max[1] - exchangeModel->bbox.min[1];  //求对角线的平方
+	float oldLength = oldModel->bbox.max[1] - oldModel->bbox.min[1];
+	oldLength *= oldModel->scaled;
+	exchangeModel->scaled = oldLength/tempLength1;
+
+	exchangeModel->need_bsphere_newInseartOBJ();
+
+	exchangeModel->tx =( oldModel->bbox.center() - exchangeModel->bbox.center())[0] + oldModel->tx;
+	exchangeModel->ty =( oldModel->bbox.center() - exchangeModel->bbox.center())[1] + oldModel->ty;
+	exchangeModel->tz =( oldModel->bbox.center() - exchangeModel->bbox.center())[2] + oldModel->tz;
 }
 
 //本函数响应QModelListDialog发射的信号，download被挑选的物体，随后再插入场景，让场景重绘
@@ -602,10 +723,23 @@ void QSceneDisplay::Inseart3DModel(int sModel)
 	//this->scene->sceneModels.push_back(insertModel);
 	//this->scene->modelSize++;
 	this->scene->newInsertModels.push_back(insertModel);
+
 	this->scene->insertModelSize++;
 	this->scene->allModelSize = this->scene->insertModelSize+ this->scene->modelSize;
 	
+	insertModel->tag = recomendModelLabel[sModel]; //获取模型的标签
+
 	this->generateInseartModleInformation(insertModel);
+
+	//将新插入的模型加入到当前场景的tag列表之中
+	if (this->currentSceneLabels.count(insertModel->tag))
+	{
+		this->currentSceneLabels[insertModel->tag]++;
+	}
+	else
+	{
+		this->currentSceneLabels.insert(make_pair(insertModel->tag,1));
+	}
 
 	this->scene->ModelMap.insert(make_pair(insertModel->name,this->scene->GetAllModelSize()-1));
 
@@ -613,14 +747,63 @@ void QSceneDisplay::Inseart3DModel(int sModel)
 	//selectModel = 1;
 
 	//重绘整个场景
-	this->DrawScene();
+	 this->updateGL();
+	//this->DrawScene();
 	//insertModel->DrawTrimesh();
 }
 
+//用于响应QSameModelListDialog发射的信号，download被挑选的物体，随后再插入场景，替换原有物体，随后让场景重绘
+void QSceneDisplay::Exchange3DModel(int clickedModel)
+{
+	//首先记录用户的选择
+	this->selected3DModel = clickedModel+1;
 
+	Model* insertModel = new Model;
+
+	strstream ss;
+	ss<<clickedModel+1;
+	string clickedIndex;
+	ss>>clickedIndex;
+
+	string modelTag = this->scene->GetModel(selectModel)->tag;
+	transform(modelTag.begin(),modelTag.end(),modelTag.begin(),tolower);
+
+	string modelFilepath("3DModelDatabase\\"+ modelTag +"\\"+ modelTag + clickedIndex +"\\"+ modelTag + clickedIndex +".obj");
+    
+	insertModel->ReadOBJ(modelFilepath);
+
+	//将新读取的模型加入到插入模型队列
+	this->scene->newInsertModels.push_back(insertModel);
+
+	//设置原有模型不可见
+	this->scene->GetModel(selectModel)->visible = false;
+
+	//更新各部分的模型数量统计
+	if (selectModel < this->scene->sceneModels.size())
+	{
+		this->scene->modelSize --;
+		this->scene->insertModelSize++;
+		this->scene->allModelSize = this->scene->insertModelSize+ this->scene->modelSize;
+	}
+	
+	insertModel->tag = this->scene->GetModel(selectModel)->tag ; //获取模型的标签
+
+	this->generateExchangeModleInformation(insertModel);
+
+	this->scene->ModelMap.insert(make_pair(insertModel->name,this->scene->GetAllModelSize()-1));
+
+	//设定当前拾取模型为新插入模型
+	selectModel = this->scene->GetAllModelSize()-1;
+
+
+	//重绘整个场景
+	//this->DrawScene();
+	this->updateGL();
+
+}
 
 /************************************************************************/
-/* 暂时被弃用
+/* *******************暂时被弃用******************************
 //基于用于选定的模型来推荐新的模型
 //实现方案：1.读取不同场景类别下的所有标签集合
 2.存储当前场景label集合 和输入场景label集合
@@ -853,10 +1036,12 @@ void QSceneDisplay::recommendModelsBySelectedLabel(int recommendBasedModel)
 void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 {
 	//防止上一次的数据对本次推荐产生污染，所以必须对上次推荐数据进行清空
-	if( !currentSceneLabels.empty())
-	{
-		currentSceneLabels.clear();
-	}
+
+	////不必在这里清除，因为只有在新插入和删除的时候会影响到label
+	//if( !currentSceneLabels.empty())
+	//{
+	//	currentSceneLabels.clear();
+	//}
 	
 	if (!recommendLabelAndWeight.empty())
 	{
@@ -871,8 +1056,8 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 	ifstream in;
 
 	//********** 2.存储当前场景label集合 和输入场景label集合<已经由mainwindow传递过来>*************
-	//if(isFirstRecommend)  //可能在第二次推荐过程中有些模型增加或者被删除
-	//{
+	if(isFirstRecommend)  
+	{
 		for(int i=0; i< scene->modelSize; i++)
 		{
 			if(scene->sceneModels[i]->visible) //仅仅当模型可见才需要添加，因为某些模型被删除也仅仅设置成不可见
@@ -888,10 +1073,9 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 			}//if
 
 		}//for
-	//}
+	}//if
 
 	
-
 	//****************** 3.读取不同场景下不同label的relevence label ***************************
 	string tempLabel1;
 	int labelId,labelId1;
@@ -899,6 +1083,12 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 
 	if (isFirstRecommend) //仅仅需要初始化一次
 	{
+		//防止数据污染
+		if (sceneLabelRelevence.size())
+		{
+			sceneLabelRelevence.clear();
+		}
+
 		inPath = "SearchResult\\LabelRelevencePMI.txt";
 		in.open(inPath);
 		if(!in)
@@ -968,12 +1158,59 @@ void QSceneDisplay::recommendModelsBySelectedLabel2(int recommendBasedModel)
 		in.close();
 	}
 
+	//仅仅需要初始化一次,用于对模型进行缩放变换
+	if (isFirstRecommend)
+	{
+		//防止数据污染
+		if (sceneModelSizeRatio.size())
+		{
+			sceneModelSizeRatio.clear();
+		}
 
+		inPath = "SearchResult\\SceneObjectSizeRatioResult.txt";
+		in.open(inPath);
+		if(!in)
+		{
+			//
+		}
+
+		string sceneNameT;
+		string labelNameT;
+		float ratio;
+
+		while(!in.eof())
+		{
+			getline(in,buffer);
+			istringstream line(buffer);
+			line>>sceneNameT>>labelNameT>>ratio;
+
+			if(sceneModelSizeRatio.count(sceneNameT))
+			{
+				sceneModelSizeRatio[sceneNameT].insert(make_pair(labelNameT,ratio));
+			}
+			else
+			{
+				map<string,float> temp;
+				temp.insert(make_pair(labelNameT,ratio));
+				sceneModelSizeRatio.insert(make_pair(sceneNameT,temp));
+			}
+
+			line.clear();
+			buffer.clear();
+		}
+
+		in.clear();
+		in.close();
+
+		//用于去统计场景里某个tag对应的model position
+		scene->GenerateModelTagPosition();
+	}
 	
+
 	//******************* 4.计算推荐label****************
 
 	//******************relevent 模型部分***************
-	string selectedLabel = scene->sceneModels[recommendBasedModel]->tag;  //获取被选定物体的tag
+	string selectedLabel = scene->GetModel(recommendBasedModel)->tag;  //获取被选定物体的tag
 	int selectedLabelCount = currentSceneLabels[selectedLabel];
 	map<string,map<int,double>>::iterator releventLabel = sceneLabelRelevence[sceneStyle][selectedLabel][selectedLabelCount].begin();
 	map<int,double>::iterator labelCountIt;
@@ -1231,7 +1468,7 @@ void QSceneDisplay::sceneOperationAction()
 {
 	if (sceneDisplayState == ObjectState)
 	{
-		this->selected3DModel = -1;
+		this->selectModel = -1;
 		this->sceneDisplayState = SceneState;
 		//this->DrawScene();
 		this->updateGL();
@@ -1258,7 +1495,7 @@ void QSceneDisplay::exchangeModelAction()
 			sameModelListDialog->objectFilepath.push_back( "3DModelDatabase\\"+selectedLabel+"\\"+selectedLabel+temp+"\\"+selectedLabel+temp);
 			ss.clear();
 		}
-
+		connect(sameModelListDialog,SIGNAL(Exchange3DModel(int)),this,SLOT(Exchange3DModel(int)));
 		int modelListDialogWidth = this->width()*0.75;
 		int modelListDialogHeight = this->height()*0.75;
 		sameModelListDialog->DownloadModelImage(modelListDialogWidth,modelListDialogHeight);
@@ -1267,6 +1504,8 @@ void QSceneDisplay::exchangeModelAction()
 }
 
 // 用于将场景中某个模型删除，事实上是设置成invisible
+//需要更新的数据结构包括：1. modelSize
+//2. currentSceneLabels
 void QSceneDisplay::removeModelAction()
 {
 	if(this->sceneDisplayState == ObjectState)
@@ -1276,9 +1515,81 @@ void QSceneDisplay::removeModelAction()
 		 {
 			 selectModelT->visible = false;
 			 this->sceneDisplayState = SceneState;
+
+			 if (currentSceneLabels.count(selectModelT->tag))
+			 {
+				 currentSceneLabels[selectModelT->tag]--;
+			 }
+
+			 if (this->selectModel < this->scene->sceneModels.size())
+			 {
+				 this->scene->modelSize -- ;
+				 this->scene->allModelSize --;
+			 }
+			 else
+			 {
+				 this->scene->insertModelSize --;
+				 this->scene->allModelSize --;
+			 }
+
 			 this->selectModel = -1;
 			 //this->DrawScene();
 			 this->updateGL();
 		 }
 	}
+}
+
+/*用于计算当前插入模型放大缩小的比例,返回负数表示出错，伸缩比例都是长宽高统一比例，以高度作为基准
+算法思路：1.首先看当前场景中是否包含chair，如果包含chair，那么该模型的目标大小为chair大小*ratio；
+2.如果当前场景中没有chair，那么看当前场景中存在什么物体，但是不能使wall，那么就是该物体大小/对应ratioA *ratio
+*/
+void QSceneDisplay::CalculateModelSizeRatio(Model* inseartModelT)
+{
+	Model* modelChair;
+	float heightT,temp;
+	int biggestPositon;
+	string tag;
+	//1.查看当前场景是否包含chair
+	if (currentSceneLabels.count("Chair"))
+	{
+		modelChair = scene->sceneModels[scene->ModelTagePositon["Chair"][0]];
+		heightT = modelChair->bbox.max[1] - modelChair->bbox.min[1];
+		heightT *= sceneModelSizeRatio[sceneStyle][inseartModelT->tag] ;
+		inseartModelT->scaled =heightT/(inseartModelT->bbox.max[1] - inseartModelT->bbox.min[1]);
+	}
+	//查看当前场景里体积最大的物体（除了wall）
+	else
+	{
+		if (scene->sceneModels[0]->tag != "Wall")
+		{
+			tag = scene->sceneModels[0]->tag;
+			biggestPositon = 0;
+			heightT = scene->sceneModels[0]->bbox.max[1] - scene->sceneModels[0]->bbox.max[1];
+		}
+		else
+		{
+			tag = scene->sceneModels[1]->tag;
+			biggestPositon = 0;
+			heightT = scene->sceneModels[1]->bbox.max[1] - scene->sceneModels[1]->bbox.max[1];
+		}
+
+		for (int i = 1 ; i< scene->sceneModels.size(); i++)
+		{
+			if ( scene->sceneModels[i]->tag != "Wall")
+			{
+				temp = scene->sceneModels[i]->bbox.max[1] - scene->sceneModels[i]->bbox.max[1];
+				if (temp > heightT)
+				{
+					tag = scene->sceneModels[i]->tag;
+					biggestPositon = i;
+					heightT = temp;
+				}
+			}
+		}//for
+
+		heightT /= sceneModelSizeRatio[sceneStyle][tag] ;
+		heightT *= sceneModelSizeRatio[sceneStyle][inseartModelT->tag] ;
+		inseartModelT->scaled =heightT/(inseartModelT->bbox.max[1] - inseartModelT->bbox.min[1]);
+	}//else
+
 }

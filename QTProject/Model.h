@@ -45,7 +45,8 @@ public:
 	box bbox; //包围盒
 	BSphere bsphere; //包围球
 
-	GLfloat tx; // translate的x
+	//GLfloat tx; // translate的x
+	GLdouble tx; // translate的x
 	GLdouble ty; // translate的y
 	GLdouble tz; // translate的z
 

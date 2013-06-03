@@ -1,5 +1,8 @@
 #include "QModelListDialog.h"
 
+/*
+*****************用于展示3D场景内的模型推荐列表***********************
+*/
 QModelListDialog::QModelListDialog(QWidget *parent) :
 QDialog(parent)
 {

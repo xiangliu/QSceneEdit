@@ -2,6 +2,10 @@
 #include <QMessageBox>
 #include <string>
 
+/*
+**************用于展示3D场景检索列表*************************
+*/
+
 QSearchListDisplay::QSearchListDisplay(QWidget *parent) :
 QWidget(parent)
 {

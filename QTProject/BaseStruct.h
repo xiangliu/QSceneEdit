@@ -43,15 +43,15 @@ struct Face{
 	}
 };
 
-// 材质信息
-//struct Materia{
-//	string name;
-//	string path;
-//	float Ka[4]; 
-//	float Kd[4];
-//	float Ks[4];
-//	GLuint TextureId;
-//};
+//材质信息
+struct Materia{
+	string name;
+	string path;
+	float Ka[4]; 
+	float Kd[4];
+	float Ks[4];
+	GLuint TextureId;
+};
 
 // obj中的mesh；一个物体可能对应1到多个Mesh
 // 需要根据label信息考虑怎么处理

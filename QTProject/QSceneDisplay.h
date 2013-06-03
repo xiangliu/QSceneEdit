@@ -83,10 +83,11 @@ public:
 	GLdouble *glModelM; // Model Matrix
 	int *glViewM;   // viewport
 
-	//************定义单个模型检索相关的变量***************
+	//************定义单个模型推荐（检索）相关的变量***************
+	map<string,map<string,float>> sceneModelSizeRatio; //用于保存通过计算得到的场景内物体之间的大小比例关系，都是与chair的比值
 	bool isFirstRecommend;  //用于表示是否是第一次进行推荐，因为如果是第一次则很多变量需要初始化
 	string sceneStyle;  //用于表示当前场景的类别（bedroom。。。等）
-	int selected3DModel;   //-1代表什么都没有选
+	int selected3DModel;   //-1代表什么都没有选(这是用来记录在检索列表中的选择，注意区分于拾取)
 	pObjectMatRes pObjectMatchResult;
 	//vector<string>recommendLabelPath;  //用于保存推荐物体的数据库路径
 	map<string,map<string,int>>sceneLabelAndCount;  //用于保存每个场景类别中所拥有的label集合
@@ -94,10 +95,15 @@ public:
 	map<string,int>currentSceneLabels;  //检索得到的当前场景所拥有的label集合
 	map<string,map<string,map<int,map<string,map<int,double>>>>> sceneLabelRelevence;  //保存不同场景中不同物体label下的相关度
 	map<string,double> recommendLabelAndWeight; //用于保存当前推荐所有物体的label和权重
+	vector<string> recomendModelLabel; //用于保存最新一次推荐模型的所有label，使用之前必须清空
 
 	//**************与单个模型检索结果列表展示相关的变量***************
 	QModelListDialog* modelListDialog;
 	QSameModelListDialog* sameModelListDialog;   //用于替换单个模型类别的对话框
+	
+	//***********************画材质相关变量***************************
+	GLubyte checkImage[64][64][4];
+	GLuint texName;
 
 	// 自定义方法
 public:
@@ -106,6 +112,9 @@ public:
 	bool isSelectedModelValid();
 	void SetProjectionModelView();
 	void generateInseartModleInformation(Model* insertModel);  //为插入的模型计算模型相关信息
+	void CalculateModelSizeRatio(Model* inseartModelT); //用于计算当前插入模型放大缩小的比例
+	void makeCheckImage();   //画地板材质使用的方法
+	void generateExchangeModleInformation(Model* exchangeModel);  //为exchange的模型计算模型相关信息
 
 public slots:
 	void SetDisScene(Scene* scene);  // 将读入的场景传入过来，方便进行操作
@@ -119,7 +128,7 @@ public slots:
 
 	//void pickupCubeAction();  //选择往场景中添加新的模型，首先即选择添加一个立方体，随后再将立方体平移到合适位置放大缩小
 	void Inseart3DModel(int selectedModel);  //用于响应QModelListDialog发射的信号，download被挑选的物体，随后再插入场景，让场景重绘
-
+	void Exchange3DModel(int clickedModel);   //用于响应QSameModelListDialog发射的信号，download被挑选的物体，随后再插入场景，替换原有物体，随后让场景重绘
 signals:
 
 protected:

@@ -23,7 +23,21 @@ void QSegPictureDisplay::paintEvent(QPaintEvent *e)
 		int x = width()/2 - grayImg->width()/2;
         int y = height()/2 - grayImg->height()/2;
 		QPainter painter(this);
-		painter.drawImage(QPoint(x,y),*grayImg);
+
+		//QPoint widPosition = this->pos();
+		////用于比较绘制窗口与输入图像的大小关系
+		//QSize drawRectSize = this->size();
+		//if (drawRectSize.height() < grayImg->height() || drawRectSize.width() < grayImg->width())
+		//{
+		//	QImage* scaledGrayImg = new QImage;
+		//	*scaledGrayImg= grayImg->scaled(drawRectSize,Qt::KeepAspectRatio);
+		//	//*scaledGrayImg= grayImg->scaled(drawRectSize.width() ,drawRectSize.height());
+		//	painter.drawImage(widPosition,*scaledGrayImg);
+		//}
+		//else
+		//{
+			painter.drawImage(QPoint(x,y),*grayImg);
+		//}
 	}
 	else if( grayImg != NULL && sState == cleanObject )
 	{

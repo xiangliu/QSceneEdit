@@ -1,9 +1,10 @@
 #ifndef QSAMEMODELLISTDIALOG_H
 #define QSAMEMODELLISTDIALOG_H
 
-/************************************************************************/
-/* 用于设置所有object之间的relationship                                                                     */
-/************************************************************************/
+/*
+*****************用于展示3D场景内的模型形状exchange列表***********************
+*/
+
 #include <QImage>
 #include <QLabel>
 #include <QDialog>
@@ -109,10 +110,11 @@ public:
 	int modelImageHeight;  //用于表示最终显示结果中模型图片的大小
 
 signals:
-	void Inseart3DModel(int selectedModel); //这个signal由QSceneDisplay 来接受，用于接受用户双击选择的结果
+	void Exchange3DModel(int clickedModel); //这个signal由QSceneDisplay 来接受，用于替换用户双击选择的结果
 
-	public slots:
-		void accept();  //在doubleclick中调用，用来完成Model的选择，然后关闭dialog
+public slots:
+	void accept();  //在doubleclick中调用，用来完成Model的选择，然后关闭dialog
+
 private:
 
 };

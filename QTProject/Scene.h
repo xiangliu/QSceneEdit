@@ -56,9 +56,11 @@ public:
 
 	vector<Face*> faces;  //整个场景的所有面片
 
-#ifdef DefMaterial
-	string mtlPath;
 
+	//*******************从#infdef中抽取出来的**************************
+	string mtlPath;  //保存模型的材质信息
+
+	//与纹理相关的暂时未使用
 	vtexture* vtextures;
 	int Vtsize; // 纹理个数
 
@@ -69,6 +71,22 @@ public:
 
 	vector<int> usemtlSlice; // 每次出现usemtl时，faces的个数。
 	vector<int> mtlMark; // 与usemtlSlice对应，usemtlSlice[i]~~usemtlSlice[i+1]对应的mtl为：mtlMark[i];
+
+	//*******************从#infdef中抽取出来的**************************
+
+#ifdef DefMaterial
+	//string mtlPath;
+
+	//vtexture* vtextures;
+	//int Vtsize; // 纹理个数
+
+	//Material *materials;
+	//int MtlSize;
+
+	//int TextureNum; // 纹理段的个数，对应usemtl的那一段
+
+	//vector<int> usemtlSlice; // 每次出现usemtl时，faces的个数。
+	//vector<int> mtlMark; // 与usemtlSlice对应，usemtlSlice[i]~~usemtlSlice[i+1]对应的mtl为：mtlMark[i];
 #endif
 
 	//所有的modelSize 都不包含非invisible的model
@@ -83,8 +101,9 @@ public:
 	vector<float>modelImportance;  //用于记录物体的重要程度：物体包围盒大小、relationship涵盖物体数、相同label个数
 
 	int** relationTable;  // 关系表单
-	map<string,int> ModelMap; // Tag : Model_index;第一个填0
-	map<string,vector<int>> RelationMap; // Tag : Relationship
+	map<string,int> ModelMap; // ModelName : Model_index;第一个填0
+	map<string,vector<int>>ModelTagePositon; //用于保存模型列别中某个tag所对应模型在vector中的位置
+	map<string,vector<int>> RelationMap; // ModelName : Relationship
 	box objectSearchBBox;  //用于检索单个物体摆放至场景中的包围盒
 	box bbox; //整个场景的包围盒
 	BSphere bsphere; // 包围球
@@ -94,7 +113,7 @@ public:
 public:
     bool readScene(const char* filename);
 	void DrawScene();
-	void DrawSceneWithNewInsertModel(); //用来绘制带有新插入模型的场景
+	void DrawSceneWithNewInsertModel( GLuint texName ); //用来绘制带有新插入模型的场景
 	void need_bbox();
 	void need_bsphere();
 	void DrawTest();
@@ -113,6 +132,10 @@ public:
 	void CalculateModelImportance();   //用于计算所有模型的重要程度
 	int GetAllModelSize();  //用于获取场景中原有模型和新加入模型的总数，包括被设置了invisible的模型
 	Model* GetModel(int selectedModel);  //根据模型在modelMap里的序号来获取模型
+	void DrawFloor(GLuint texName);  //为了显示效果新增的floor绘制
+	void DrawFloorHelp(vec MinV, vec MaxV,GLuint texName);  //辅助绘制floor的函数
+	void GenerateModelTagPosition();  //生成模型对应的tag 和在vector中所在位置的对应变量
+	
 	// 辅助操作
 private:
 	// return false,没有找到对应格式处理程序
@@ -126,11 +149,15 @@ private:
 	void tess(const vector<int> &thisv,const vector<int> &thisvn);
 
 #ifdef DefMaterial
-	// 读取mtl纹理文件信息
-	void LoadMtl(string mtlPath);
+	//// 读取mtl纹理文件信息
+	//void LoadMtl(string mtlPath);
 	// 分割由多个顶点构成的面片,处理纹理
 	void tess(const vector<int> &thisv,const vector<int> &thisvt,const vector<int> &thisvn);
 #endif
+
+	// 读取mtl纹理文件信息(从 ifdef中抽取出来的)
+	void LoadMtl(string mtlPath);
+
 	// 补充模型的结束Faces
 	void CompleteModelSetting();
 	// 找到模型的Tag

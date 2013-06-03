@@ -1,5 +1,9 @@
 #include "QSameModelListDialog.h"
 
+/*
+*****************用于展示3D场景内的模型形状exchange列表***********************
+*/
+
 QSameModelListDialog::QSameModelListDialog(QWidget *parent) :
 QDialog(parent)
 {
@@ -186,7 +190,7 @@ void QSameModelListDialog::mouseDoubleClickEvent(QMouseEvent *event)
 void QSameModelListDialog::accept()
 {
 	//往QSceneDisplay发送信号，再关闭对话框
-	emit Inseart3DModel(selectedModle);
+	emit Exchange3DModel(selectedModle);
 	QDialog::accept();
 }
 

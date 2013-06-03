@@ -2,8 +2,9 @@
 #define QMODELLISTDIALOG_H
 
 /************************************************************************/
-/* 用于设置所有object之间的relationship                                                                     */
+/* 用于展示3D场景中的模型推荐列表                                                                   */
 /************************************************************************/
+
 #include <QImage>
 #include <QLabel>
 #include <QDialog>
@@ -111,8 +112,9 @@ public:
 signals:
 	void Inseart3DModel(int selectedModel); //这个signal由QSceneDisplay 来接受，用于接受用户双击选择的结果
 
-	public slots:
-		void accept();  //在doubleclick中调用，用来完成Model的选择，然后关闭dialog
+public slots:
+	void accept();  //在doubleclick中调用，用来完成Model的选择，然后关闭dialog
+
 private:
 
 };

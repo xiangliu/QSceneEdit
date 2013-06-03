@@ -69,7 +69,8 @@ void Model::DrawModel()
 	glGetDoublev(GL_MODELVIEW_MATRIX,ModelMatrix);
 	// loadÃû³Æ£¬·½±ãÊ°È¡
 	glLoadName(scene->ModelMap[this->name]);
-	glColor3b(255,0,0);
+
+	//glColor3b(255,0,0);
 	glBegin(GL_TRIANGLES);
 	for (int i=faceStart;i<faceEnd;i++)
 	{
@@ -209,7 +210,8 @@ void Model::DrawBbox()
 	glPushMatrix();
 
 	glMultMatrixd(ModelMatrix);
-	glColor3f(1.0,0,0);
+	glLineWidth(1.8);
+	//glColor3f(1.0,0,0);
 	glBegin(GL_LINE_STRIP);
 	glVertex3f(bbox.min[0],bbox.max[1],bbox.min[2]);
 	glVertex3f(bbox.min[0],bbox.min[1],bbox.min[2]);
